@@ -1,7 +1,39 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoVault</title>
+</head>
+<body>
 <style>
+  :root {
+    --color-background-primary: #1c1c1a;
+    --color-background-secondary: #252523;
+    --color-background-tertiary: #2e2e2b;
+    --color-background-info: #0c447c;
+    --color-background-success: #27500a;
+    --color-background-warning: #633806;
+    --color-background-danger: #791f1f;
+    --color-text-primary: #eeecea;
+    --color-text-secondary: #b4b2a9;
+    --color-text-tertiary: #888780;
+    --color-text-info: #85b7eb;
+    --color-text-success: #97c459;
+    --color-text-warning: #ef9f27;
+    --color-text-danger: #f09595;
+    --color-border-tertiary: rgba(255,255,255,0.10);
+    --color-border-secondary: rgba(255,255,255,0.18);
+    --color-border-primary: rgba(255,255,255,0.28);
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, monospace;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font-sans); }
+  body { font-family: var(--font-sans); background: #1c1c1a; }
   .dash { padding: 1.5rem; max-width: 700px; margin: 0 auto; }
   .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
   .logo { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
@@ -38,7 +70,7 @@
   .modal-bg.open { display: flex; }
   .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1.5rem; width: 320px; }
   .modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 1rem; color: var(--color-text-primary); }
-  .modal input, .modal select { width: 100%; margin-bottom: 10px; font-size: 14px; padding: 8px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .modal input, .modal select { width: 100%; margin-bottom: 10px; font-size: 14px; padding: 8px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-primary); outline: none; }
   .modal-actions { display: flex; gap: 8px; margin-top: 4px; }
   .btn-primary { flex: 1; padding: 9px; background: var(--color-background-info); color: var(--color-text-info); border: none; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; }
   .btn-cancel { padding: 9px 14px; background: var(--color-background-secondary); color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; cursor: pointer; }
@@ -188,7 +220,7 @@
       body.innerHTML = `
         <div style="text-align:center; padding: 8px 0;">
           <div style="font-size:11px; color:var(--color-text-secondary); margin-bottom:8px;">Your BTC address</div>
-          <div style="font-size:12px; font-family:var(--font-mono); background:var(--color-background-secondary); padding:10px; border-radius:var(--border-radius-md); word-break:break-all;">bc1qxy2kgdygjrsqtzq2n0yrf249234</div>
+          <div style="font-size:12px; font-family:var(--font-mono); background:var(--color-background-secondary); padding:10px; border-radius:var(--border-radius-md); word-break:break-all; color:var(--color-text-primary);">bc1qxy2kgdygjrsqtzq2n0yrf249234</div>
         </div>
         <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Close</button></div>`;
     } else if (type === 'convert') {
@@ -254,9 +286,6 @@
     if (e.target === this) closeModal();
   });
 
-  // ── hidden easter egg ──────────────────────────────────────────
-  // Not linked from UI. Discoverable only via DevTools console.
-
   window.help = function() {
     console.log('%cCryptoVault Dev Console', 'font-size:16px; font-weight:bold; color:#1a73e8;');
     console.log('%cAvailable commands:', 'color:#555;');
@@ -290,3 +319,5 @@
     return balance;
   };
 </script>
+</body>
+</html>
