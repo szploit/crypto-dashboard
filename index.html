@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CryptoVault</title>
 </head>
+  <div id="auth-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300; align-items:center; justify-content:center; flex-direction:column; gap:16px; opacity:0; transition:opacity 0.3s;">
+  <div style="width:44px; height:44px; border:3px solid rgba(255,255,255,0.15); border-top-color:#85b7eb; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+  <div style="font-size:14px; color:rgba(255,255,255,0.7); font-family:var(--font-sans);">Authenticating the transaction...</div>
+</div>
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 <body>
 <style>
   :root {
@@ -323,7 +330,7 @@
 
         <div class="modal-actions" style="margin-top:8px;">
           <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-          <button class="btn-primary" onclick="doBuy()">Pay now</button>
+          <button class="btn-primary" id="pay-btn" style="opacity:0.35; cursor:not-allowed;" onclick="doBuy()">Pay now</button>
         </div>`;
     }
   }
@@ -363,6 +370,13 @@
     const nmEl = document.getElementById('cc-name');
     nmEl.textContent = name.toUpperCase() || 'YOUR NAME';
     nmEl.className = 'card-field-value' + (!name ? ' placeholder' : '');
+    const allFilled = clean.length === 16 && expiry.length === 5 && cvv.length === 3 && name.trim();
+const payBtn = document.getElementById('pay-btn');
+if (payBtn) {
+  payBtn.style.opacity = allFilled ? '1' : '0.35';
+  payBtn.style.cursor = allFilled ? 'pointer' : 'not-allowed';
+  payBtn.disabled = !allFilled;
+}
   }
 
   function closeModal() {
