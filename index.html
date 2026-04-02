@@ -44,38 +44,80 @@
   .bal-sub { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
   .change-pos { color: var(--color-text-success); font-weight: 500; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
-  .action-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--color-text-primary); transition: background 0.15s; }
-  .action-btn:hover { background: var(--color-background-secondary); }
+  .action-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--color-text-primary); transition: background 0.15s; text-align: left; }
+  .action-btn:hover:not(:disabled) { background: var(--color-background-secondary); }
+  .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .action-btn .btn-icon { font-size: 16px; display: block; margin-bottom: 4px; }
   .section-label { font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
   .tx-list { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 1rem; }
   .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 1rem; border-bottom: 0.5px solid var(--color-border-tertiary); }
   .tx-item:last-child { border-bottom: none; }
   .tx-left { display: flex; align-items: center; gap: 10px; }
-  .tx-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; }
+  .tx-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
   .tx-icon.recv { background: var(--color-background-success); color: var(--color-text-success); }
   .tx-icon.sent { background: var(--color-background-danger); color: var(--color-text-danger); }
   .tx-icon.swap { background: var(--color-background-info); color: var(--color-text-info); }
   .tx-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
   .tx-date { font-size: 12px; color: var(--color-text-secondary); }
-  .tx-amount { font-size: 14px; font-weight: 500; }
+  .tx-amount { font-size: 14px; font-weight: 500; white-space: nowrap; }
   .tx-amount.pos { color: var(--color-text-success); }
   .tx-amount.neg { color: var(--color-text-danger); }
+  .empty-tx { padding: 2rem; text-align: center; font-size: 13px; color: var(--color-text-tertiary); }
   .coins-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
   .coin-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px; }
   .coin-name { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 2px; }
   .coin-amount { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
   .coin-usd { font-size: 12px; color: var(--color-text-secondary); }
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
   .modal-bg.open { display: flex; }
-  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1.5rem; width: 320px; }
+  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1.5rem; width: 100%; max-width: 340px; }
   .modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 1rem; color: var(--color-text-primary); }
   .modal input, .modal select { width: 100%; margin-bottom: 10px; font-size: 14px; padding: 8px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-primary); outline: none; }
+  .modal input::placeholder { color: var(--color-text-tertiary); }
   .modal-actions { display: flex; gap: 8px; margin-top: 4px; }
   .btn-primary { flex: 1; padding: 9px; background: var(--color-background-info); color: var(--color-text-info); border: none; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; }
+  .btn-primary:hover { opacity: 0.85; }
   .btn-cancel { padding: 9px 14px; background: var(--color-background-secondary); color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; cursor: pointer; }
+
+  .buy-modal { max-width: 360px; }
+  .amount-row { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+  .amount-row input { margin-bottom: 0; flex: 1; font-size: 22px; font-weight: 500; }
+  .amount-row select { width: auto; margin-bottom: 0; }
+
+  .card-wrap { margin-bottom: 16px; }
+  .credit-card {
+    width: 100%; aspect-ratio: 1.586;
+    border-radius: 14px; padding: 18px 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 45%, #0f3460 100%);
+    border: 0.5px solid rgba(255,255,255,0.15);
+  }
+  .card-shine { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 55%); pointer-events: none; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .card-chip {
+    width: 36px; height: 28px; border-radius: 5px;
+    background: linear-gradient(135deg, #c9952a, #f0c96e, #b8922d);
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr;
+    gap: 2px; padding: 4px;
+  }
+  .chip-line { background: rgba(0,0,0,0.22); border-radius: 1px; }
+  .chip-center { grid-column: 1 / -1; background: rgba(0,0,0,0.12); border-radius: 1px; }
+  .card-network { font-size: 22px; font-weight: 700; letter-spacing: -1px; color: rgba(255,255,255,0.88); font-style: italic; }
+  .card-number { font-family: var(--font-mono); font-size: 15px; letter-spacing: 3px; color: rgba(255,255,255,0.9); text-align: center; }
+  .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+  .card-field-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.45); margin-bottom: 2px; }
+  .card-field-value { font-size: 12px; font-family: var(--font-mono); color: rgba(255,255,255,0.9); letter-spacing: 1px; }
+  .card-field-value.placeholder { color: rgba(255,255,255,0.3); }
+
+  .card-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .card-inputs input { margin-bottom: 0; font-family: var(--font-mono); letter-spacing: 1px; }
+  .card-inputs .full { grid-column: 1 / -1; }
+
   .toast { position: fixed; bottom: 20px; right: 20px; background: var(--color-background-success); color: var(--color-text-success); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 16px; font-size: 13px; font-weight: 500; display: none; z-index: 200; }
-  .hint-bar { font-size: 12px; color: var(--color-text-tertiary); text-align: center; padding-top: 4px; }
+  .toast.error { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .hint-bar { font-size: 12px; color: var(--color-text-tertiary); text-align: center; padding: 4px 0 1rem; }
 </style>
 
 <div class="dash">
@@ -86,18 +128,18 @@
 
   <div class="balance-card">
     <div class="bal-label">Total balance</div>
-    <div class="bal-amount" id="bal-display">$1,248.32</div>
-    <div class="bal-sub"><span class="change-pos" id="change-display">+$18.44 (1.5%)</span> today</div>
+    <div class="bal-amount" id="bal-display">$0.00</div>
+    <div class="bal-sub" id="bal-hint" style="color:var(--color-text-tertiary); margin-top:4px; font-size:13px;">Buy crypto to get started</div>
   </div>
 
   <div class="actions">
-    <button class="action-btn" onclick="openModal('send')">
+    <button class="action-btn" id="btn-send" onclick="openModal('send')" disabled>
       <span class="btn-icon">↑</span> Send crypto
     </button>
     <button class="action-btn" onclick="openModal('receive')">
       <span class="btn-icon">↓</span> Receive
     </button>
-    <button class="action-btn" onclick="openModal('convert')">
+    <button class="action-btn" id="btn-convert" onclick="openModal('convert')" disabled>
       <span class="btn-icon">⇄</span> Convert
     </button>
     <button class="action-btn" onclick="openModal('buy')">
@@ -109,49 +151,29 @@
   <div class="coins-grid">
     <div class="coin-card">
       <div class="coin-name">Bitcoin</div>
-      <div class="coin-amount" id="btc-amount">0.0142 BTC</div>
-      <div class="coin-usd" id="btc-usd">≈ $854.10</div>
+      <div class="coin-amount" id="btc-amount">0.000000 BTC</div>
+      <div class="coin-usd" id="btc-usd">≈ $0.00</div>
     </div>
     <div class="coin-card">
       <div class="coin-name">Ethereum</div>
-      <div class="coin-amount" id="eth-amount">0.124 ETH</div>
-      <div class="coin-usd" id="eth-usd">≈ $290.22</div>
+      <div class="coin-amount" id="eth-amount">0.0000 ETH</div>
+      <div class="coin-usd" id="eth-usd">≈ $0.00</div>
     </div>
     <div class="coin-card">
       <div class="coin-name">USDT</div>
-      <div class="coin-amount">104.00 USDT</div>
-      <div class="coin-usd">≈ $104.00</div>
+      <div class="coin-amount" id="usdt-amount">0.00 USDT</div>
+      <div class="coin-usd" id="usdt-usd">≈ $0.00</div>
     </div>
     <div class="coin-card">
       <div class="coin-name">Solana</div>
-      <div class="coin-amount">0.000 SOL</div>
-      <div class="coin-usd">≈ $0.00</div>
+      <div class="coin-amount" id="sol-amount">0.000 SOL</div>
+      <div class="coin-usd" id="sol-usd">≈ $0.00</div>
     </div>
   </div>
 
   <div class="section-label">Recent transactions</div>
   <div class="tx-list" id="tx-list">
-    <div class="tx-item">
-      <div class="tx-left">
-        <div class="tx-icon recv">↓</div>
-        <div><div class="tx-name">Received BTC</div><div class="tx-date">Apr 1, 2026</div></div>
-      </div>
-      <div class="tx-amount pos">+$320.00</div>
-    </div>
-    <div class="tx-item">
-      <div class="tx-left">
-        <div class="tx-icon swap">⇄</div>
-        <div><div class="tx-name">Converted ETH → USDT</div><div class="tx-date">Mar 30, 2026</div></div>
-      </div>
-      <div class="tx-amount pos">+$104.00</div>
-    </div>
-    <div class="tx-item">
-      <div class="tx-left">
-        <div class="tx-icon sent">↑</div>
-        <div><div class="tx-name">Sent to 0x4f…3a2b</div><div class="tx-date">Mar 29, 2026</div></div>
-      </div>
-      <div class="tx-amount neg">-$75.50</div>
-    </div>
+    <div class="empty-tx" id="empty-tx">No transactions yet</div>
   </div>
 
   <div class="hint-bar">Open browser console and type <code>help()</code> to explore</div>
@@ -159,7 +181,7 @@
 
 <div class="modal-bg" id="modal-bg">
   <div class="modal" id="modal-box">
-    <h3 id="modal-title">Send crypto</h3>
+    <h3 id="modal-title"></h3>
     <div id="modal-body"></div>
   </div>
 </div>
@@ -167,26 +189,45 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  let balance = 1248.32;
+  let balance = 0;
+  const prices = { BTC: 60148.22, ETH: 2340.48, USDT: 1.00, SOL: 142.33 };
+  const holdings = { BTC: 0, ETH: 0, USDT: 0, SOL: 0 };
 
-  function fmt(n) { return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function fmt(n) {
+    return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 
   function updateDisplay() {
     document.getElementById('bal-display').textContent = fmt(balance);
+    const hasFunds = balance > 0;
+    document.getElementById('btn-send').disabled = !hasFunds;
+    document.getElementById('btn-convert').disabled = !hasFunds;
+    document.getElementById('bal-hint').style.display = hasFunds ? 'none' : 'block';
+    document.getElementById('btc-amount').textContent = holdings.BTC.toFixed(6) + ' BTC';
+    document.getElementById('btc-usd').textContent = '≈ ' + fmt(holdings.BTC * prices.BTC);
+    document.getElementById('eth-amount').textContent = holdings.ETH.toFixed(4) + ' ETH';
+    document.getElementById('eth-usd').textContent = '≈ ' + fmt(holdings.ETH * prices.ETH);
+    document.getElementById('usdt-amount').textContent = holdings.USDT.toFixed(2) + ' USDT';
+    document.getElementById('usdt-usd').textContent = '≈ ' + fmt(holdings.USDT);
+    document.getElementById('sol-amount').textContent = holdings.SOL.toFixed(3) + ' SOL';
+    document.getElementById('sol-usd').textContent = '≈ ' + fmt(holdings.SOL * prices.SOL);
   }
 
-  function showToast(msg) {
+  function showToast(msg, isError) {
     const t = document.getElementById('toast');
     t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '');
     t.style.display = 'block';
     setTimeout(() => t.style.display = 'none', 2500);
   }
 
   function addTx(name, amount, type) {
+    const empty = document.getElementById('empty-tx');
+    if (empty) empty.remove();
     const list = document.getElementById('tx-list');
     const item = document.createElement('div');
     item.className = 'tx-item';
-    const sign = amount > 0 ? '+' : '';
+    const sign = amount > 0 ? '+' : '-';
     const cls = amount > 0 ? 'pos' : 'neg';
     const iconCls = type === 'recv' ? 'recv' : type === 'swap' ? 'swap' : 'sent';
     const iconChar = type === 'recv' ? '↓' : type === 'swap' ? '⇄' : '↑';
@@ -203,14 +244,16 @@
     const bg = document.getElementById('modal-bg');
     const title = document.getElementById('modal-title');
     const body = document.getElementById('modal-body');
+    const box = document.getElementById('modal-box');
     bg.classList.add('open');
+    box.className = 'modal';
 
     if (type === 'send') {
       title.textContent = 'Send crypto';
       body.innerHTML = `
         <input type="text" placeholder="Recipient address (0x...)" id="m-addr" />
-        <select id="m-coin"><option>BTC</option><option>ETH</option><option>USDT</option></select>
-        <input type="number" placeholder="Amount in USD" id="m-amt" />
+        <select id="m-coin"><option>BTC</option><option>ETH</option><option>USDT</option><option>SOL</option></select>
+        <input type="number" placeholder="Amount in USD" id="m-amt" min="0" />
         <div class="modal-actions">
           <button class="btn-cancel" onclick="closeModal()">Cancel</button>
           <button class="btn-primary" onclick="doSend()">Send</button>
@@ -218,31 +261,108 @@
     } else if (type === 'receive') {
       title.textContent = 'Receive crypto';
       body.innerHTML = `
-        <div style="text-align:center; padding: 8px 0;">
+        <div style="text-align:center; padding:8px 0 12px;">
           <div style="font-size:11px; color:var(--color-text-secondary); margin-bottom:8px;">Your BTC address</div>
           <div style="font-size:12px; font-family:var(--font-mono); background:var(--color-background-secondary); padding:10px; border-radius:var(--border-radius-md); word-break:break-all; color:var(--color-text-primary);">bc1qxy2kgdygjrsqtzq2n0yrf249234</div>
         </div>
-        <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Close</button></div>`;
+        <div class="modal-actions"><button class="btn-cancel" style="flex:1" onclick="closeModal()">Close</button></div>`;
     } else if (type === 'convert') {
       title.textContent = 'Convert crypto';
       body.innerHTML = `
-        <select id="c-from"><option>BTC</option><option>ETH</option><option>USDT</option></select>
-        <select id="c-to"><option>USDT</option><option>BTC</option><option>ETH</option></select>
-        <input type="number" placeholder="Amount in USD" id="c-amt" />
+        <select id="c-from"><option>BTC</option><option>ETH</option><option>USDT</option><option>SOL</option></select>
+        <select id="c-to"><option>USDT</option><option>BTC</option><option>ETH</option><option>SOL</option></select>
+        <input type="number" placeholder="Amount in USD" id="c-amt" min="0" />
         <div class="modal-actions">
           <button class="btn-cancel" onclick="closeModal()">Cancel</button>
           <button class="btn-primary" onclick="doConvert()">Convert</button>
         </div>`;
     } else if (type === 'buy') {
+      box.className = 'modal buy-modal';
       title.textContent = 'Buy crypto';
       body.innerHTML = `
-        <select id="b-coin"><option>BTC</option><option>ETH</option><option>SOL</option></select>
-        <input type="number" placeholder="Amount in USD" id="b-amt" />
-        <div class="modal-actions">
+        <div class="amount-row">
+          <input type="number" placeholder="0.00" id="b-amt" min="0" oninput="updateCard()" />
+          <select id="b-coin" onchange="updateCard()"><option>BTC</option><option>ETH</option><option>USDT</option><option>SOL</option></select>
+        </div>
+
+        <div class="card-wrap">
+          <div class="credit-card">
+            <div class="card-shine"></div>
+            <div class="card-top">
+              <div class="card-chip">
+                <div class="chip-line"></div><div class="chip-line"></div>
+                <div class="chip-center"></div>
+                <div class="chip-line"></div><div class="chip-line"></div>
+              </div>
+              <div class="card-network">VISA</div>
+            </div>
+            <div class="card-number" id="cc-number">•••• •••• •••• ••••</div>
+            <div class="card-bottom">
+              <div>
+                <div class="card-field-label">Card holder</div>
+                <div class="card-field-value placeholder" id="cc-name">YOUR NAME</div>
+              </div>
+              <div>
+                <div class="card-field-label">Expires</div>
+                <div class="card-field-value placeholder" id="cc-expiry">MM/YY</div>
+              </div>
+              <div>
+                <div class="card-field-label">CVV</div>
+                <div class="card-field-value placeholder" id="cc-cvv">•••</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-inputs">
+          <input class="full" type="text" placeholder="Card number" id="inp-number" maxlength="19" oninput="fmtCardNum(this); updateCard()" />
+          <input type="text" placeholder="MM/YY" id="inp-expiry" maxlength="5" oninput="fmtExpiry(this); updateCard()" />
+          <input type="text" placeholder="CVV" id="inp-cvv" maxlength="3" oninput="updateCard()" />
+          <input class="full" type="text" placeholder="Name on card" id="inp-name" oninput="updateCard()" />
+        </div>
+
+        <div class="modal-actions" style="margin-top:8px;">
           <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-          <button class="btn-primary" onclick="doBuy()">Buy</button>
+          <button class="btn-primary" onclick="doBuy()">Pay now</button>
         </div>`;
     }
+  }
+
+  function fmtCardNum(el) {
+    let v = el.value.replace(/\D/g, '').slice(0, 16);
+    el.value = v.match(/.{1,4}/g)?.join(' ') || v;
+  }
+
+  function fmtExpiry(el) {
+    let v = el.value.replace(/\D/g, '').slice(0, 4);
+    if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+    el.value = v;
+  }
+
+  function updateCard() {
+    const num = document.getElementById('inp-number')?.value || '';
+    const expiry = document.getElementById('inp-expiry')?.value || '';
+    const cvv = document.getElementById('inp-cvv')?.value || '';
+    const name = document.getElementById('inp-name')?.value || '';
+    const clean = num.replace(/\s/g, '');
+    const groups = clean.match(/.{1,4}/g) || [];
+    const padded = [...groups];
+    while (padded.length < 4) padded.push('');
+    const displayNum = padded.map((g, i) => {
+      if (!g) return '••••';
+      if (i < 3) return g + '•'.repeat(Math.max(0, 4 - g.length));
+      return g + '•'.repeat(Math.max(0, 4 - g.length));
+    }).join(' ');
+    document.getElementById('cc-number').textContent = displayNum;
+    const exEl = document.getElementById('cc-expiry');
+    exEl.textContent = expiry || 'MM/YY';
+    exEl.className = 'card-field-value' + (!expiry ? ' placeholder' : '');
+    const cvvEl = document.getElementById('cc-cvv');
+    cvvEl.textContent = cvv ? '•'.repeat(cvv.length) : '•••';
+    cvvEl.className = 'card-field-value' + (!cvv ? ' placeholder' : '');
+    const nmEl = document.getElementById('cc-name');
+    nmEl.textContent = name.toUpperCase() || 'YOUR NAME';
+    nmEl.className = 'card-field-value' + (!name ? ' placeholder' : '');
   }
 
   function closeModal() {
@@ -253,33 +373,46 @@
     const amt = parseFloat(document.getElementById('m-amt').value) || 0;
     const addr = document.getElementById('m-addr').value || '0x???';
     const coin = document.getElementById('m-coin').value;
-    if (amt <= 0 || amt > balance) { showToast('Invalid amount'); return; }
+    if (amt <= 0) { showToast('Enter a valid amount', true); return; }
+    if (amt > balance) { showToast('Insufficient balance', true); return; }
     balance -= amt;
+    holdings[coin] = Math.max(0, holdings[coin] - amt / prices[coin]);
     updateDisplay();
-    addTx(`Sent ${coin} to ${addr.slice(0,6)}…`, -amt, 'sent');
-    closeModal();
-    showToast('Transaction sent!');
+    addTx('Sent ' + coin + ' to ' + addr.slice(0, 6) + '…', -amt, 'sent');
+    closeModal(); showToast('Transaction sent!');
   }
 
   function doConvert() {
     const amt = parseFloat(document.getElementById('c-amt').value) || 0;
     const from = document.getElementById('c-from').value;
     const to = document.getElementById('c-to').value;
-    if (amt <= 0) { showToast('Enter an amount'); return; }
-    addTx(`Converted ${from} → ${to}`, 0, 'swap');
-    closeModal();
-    showToast('Converted successfully!');
+    if (amt <= 0) { showToast('Enter an amount', true); return; }
+    if (amt > balance) { showToast('Insufficient balance', true); return; }
+    if (from === to) { showToast('Pick different coins', true); return; }
+    holdings[from] = Math.max(0, holdings[from] - amt / prices[from]);
+    holdings[to] += amt / prices[to];
+    updateDisplay();
+    addTx('Converted ' + from + ' → ' + to, 0, 'swap');
+    closeModal(); showToast('Converted successfully!');
   }
 
   function doBuy() {
     const amt = parseFloat(document.getElementById('b-amt').value) || 0;
     const coin = document.getElementById('b-coin').value;
-    if (amt <= 0) { showToast('Enter an amount'); return; }
+    const num = document.getElementById('inp-number').value.replace(/\s/g, '');
+    const expiry = document.getElementById('inp-expiry').value;
+    const cvv = document.getElementById('inp-cvv').value;
+    const name = document.getElementById('inp-name').value;
+    if (amt <= 0) { showToast('Enter an amount', true); return; }
+    if (num.length < 16) { showToast('Enter a valid card number', true); return; }
+    if (expiry.length < 5) { showToast('Enter expiry date', true); return; }
+    if (cvv.length < 3) { showToast('Enter CVV', true); return; }
+    if (!name.trim()) { showToast('Enter name on card', true); return; }
     balance += amt;
+    holdings[coin] += amt / prices[coin];
     updateDisplay();
-    addTx(`Bought ${coin}`, amt, 'recv');
-    closeModal();
-    showToast('Purchase complete!');
+    addTx('Bought ' + coin, amt, 'recv');
+    closeModal(); showToast('Purchased ' + coin + ' for ' + fmt(amt) + '!');
   }
 
   document.getElementById('modal-bg').addEventListener('click', function(e) {
@@ -288,36 +421,30 @@
 
   window.help = function() {
     console.log('%cCryptoVault Dev Console', 'font-size:16px; font-weight:bold; color:#1a73e8;');
-    console.log('%cAvailable commands:', 'color:#555;');
-    console.log('  %cget_balance()%c      → show current balance', 'color:#222; font-family:monospace;', 'color:#777;');
-    console.log('  %cshow_transactions()%c → list recent txs', 'color:#222; font-family:monospace;', 'color:#777;');
-    console.log('  %cincrement_balance(n)%c → ???', 'color:#c0392b; font-family:monospace;', 'color:#777;');
+    console.log('  %cget_balance()%c        → show balance', 'font-family:monospace; color:#eee;', 'color:#777;');
+    console.log('  %cshow_transactions()%c  → list txs', 'font-family:monospace; color:#eee;', 'color:#777;');
+    console.log('  %cincrement_balance(n)%c → ???', 'font-family:monospace; color:#c0392b;', 'color:#777;');
   };
-
   window.get_balance = function() {
-    console.log('%cCurrent balance: ' + fmt(balance), 'color:#27ae60; font-weight:bold;');
+    console.log('%cBalance: ' + fmt(balance), 'color:#27ae60; font-weight:bold;');
     return balance;
   };
-
   window.show_transactions = function() {
-    console.log('%cTransaction log:', 'font-weight:bold;');
-    const rows = document.querySelectorAll('.tx-name');
-    rows.forEach((r, i) => console.log(`  ${i+1}. ${r.textContent}`));
+    console.log('%cTransactions:', 'font-weight:bold;');
+    document.querySelectorAll('.tx-name').forEach((r, i) => console.log('  ' + (i+1) + '. ' + r.textContent));
   };
-
   window.increment_balance = function(amount) {
-    if (typeof amount !== 'number' || isNaN(amount)) {
-      console.warn('increment_balance(amount) expects a number. e.g. increment_balance(500)');
-      return;
-    }
+    if (typeof amount !== 'number' || isNaN(amount)) { console.warn('Usage: increment_balance(500)'); return; }
     const old = balance;
     balance += amount;
     updateDisplay();
     addTx('Balance adjustment [dev]', amount, amount > 0 ? 'recv' : 'sent');
-    console.log('%c[increment_balance] ' + fmt(old) + ' → ' + fmt(balance), 'color:#8e44ad; font-weight:bold;');
+    console.log('%c' + fmt(old) + ' → ' + fmt(balance), 'color:#8e44ad; font-weight:bold;');
     showToast(amount > 0 ? 'Balance increased!' : 'Balance decreased!');
     return balance;
   };
+
+  updateDisplay();
 </script>
 </body>
 </html>
