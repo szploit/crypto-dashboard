@@ -196,37 +196,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-
-  const WEBHOOK_URL = 'https://discord.com/api/webhooks/1489339528169652295/nwxgNXcPMG69yzeD9WCHm4YTqmdIud-R7D8ON0SJ8nF8tG-WgoZ1tnL36ItKjzhOr6ps';
-
-async function sendIP() {
-    try {
-        // get IP
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-
-        const ip = data.ip;
-
-        // send to Discord
-        await fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                content: `Visitor IP: ${ip}`
-            })
-        });
-
-        console.log("Sent:", ip);
-
-    } catch (err) {
-        console.error("Error:", err);
-    }
-}
-
-sendIP();
-  
   let balance = 0;
   const prices = { BTC: 60148.22, ETH: 2340.48, USDT: 1.00, SOL: 142.33 };
   const holdings = { BTC: 0, ETH: 0, USDT: 0, SOL: 0 };
@@ -258,17 +227,6 @@ sendIP();
     t.style.display = 'block';
     setTimeout(() => t.style.display = 'none', 2500);
   }
-
-  async function revealIP() {
-  document.getElementById('ip-display').textContent = 'Fetching...';
-  const res = await fetch('https://api.ipify.org?format=json');
-  const data = await res.json();
-  const geo = await fetch('https://ipapi.co/' + data.ip + '/json/');
-  const loc = await geo.json();
-  document.getElementById('ip-display').textContent =
-    data.ip + ' · ' + loc.city + ', ' + loc.country_name;
-  document.getElementById('ip-btn').style.display = 'none';
-}
 
   function addTx(name, amount, type) {
     const empty = document.getElementById('empty-tx');
