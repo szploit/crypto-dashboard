@@ -241,6 +241,32 @@
   let currentUser = null;
   let authMode = 'login';
 
+  function saveSession(user) {
+  localStorage.setItem('cv_user', JSON.stringify(user));
+}
+function clearSession() {
+  localStorage.removeItem('cv_user');
+}
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('cv_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    showDash();
+  }
+});
+
+  jscurrentUser = res.data[0];
+saveSession(currentUser);
+
+  function logout() {
+  currentUser = null;
+  clearSession(); // ← add this
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('dash').style.display = 'none';
+  document.getElementById('auth-username').value = '';
+  document.getElementById('auth-password').value = '';
+}
+
   async function supa(path, method, body) {
     const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
       method: method || 'GET',
@@ -543,33 +569,37 @@
   function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
 
   async function doSend() {
-    const amt = parseFloat(document.getElementById('m-amt').value) || 0;
-    const addr = document.getElementById('m-addr').value.trim();
-    const coin = document.getElementById('m-coin').value;
-    if (amt <= 0) { showToast('Enter a valid amount', true); return; }
-    const coinValueUsd = (currentUser.holdings[coin] || 0) * prices[coin];
-    if (amt > coinValueUsd) { showToast('Insufficient ' + coin + ' balance', true); return; }
-    if (!addr) { showToast('Enter a wallet address', true); return; }
-    if (addr === currentUser.wallet_address) { showToast("That's your own address", true); return; }
+  const amt = parseFloat(document.getElementById('m-amt').value) || 0;
+  const addr = document.getElementById('m-addr').value.trim();
+  const selectedCoin = document.getElementById('m-coin').value;
+  if (amt <= 0) { showToast('Enter a valid amount', true); return; }
+  if (!addr) { showToast('Enter a wallet address', true); return; }
+  if (addr === currentUser.wallet_address) { showToast("That's your own address", true); return; }
 
-    const recRes = await supa('users?wallet_address=eq.' + encodeURIComponent(addr) + '&select=*');
-    if (!recRes.ok || !recRes.data || recRes.data.length === 0) { showToast('Wallet address not found', true); return; }
-    const recipient = recRes.data[0];
+  const coinValueUsd = (currentUser.holdings[selectedCoin] || 0) * prices[selectedCoin];
+  if (amt > coinValueUsd) { showToast('Insufficient ' + selectedCoin + ' balance', true); return; }
 
-    const senderH = { ...currentUser.holdings };
-    senderH[coin] = Math.max(0, (senderH[coin] || 0) - amt / prices[coin]);
-    const recipH = { ...(recipient.holdings || { BTC:0, ETH:0, USDT:0, SOL:0 }) };
-    recipH[coin] = (recipH[coin] || 0) + amt / prices[coin];
+  const recRes = await supa('users?wallet_address=eq.' + encodeURIComponent(addr) + '&select=*');
+  if (!recRes.ok || !recRes.data || recRes.data.length === 0) { showToast('Wallet address not found', true); return; }
+  const recipient = recRes.data[0];
 
-    await supa('users?id=eq.' + currentUser.id, 'PATCH', { balance: parseFloat(currentUser.balance) - amt, holdings: senderH });
-    await supa('users?id=eq.' + recipient.id, 'PATCH', { balance: parseFloat(recipient.balance) + amt, holdings: recipH });
-    await supa('transactions', 'POST', { from_user: currentUser.id, to_user: currentUser.id, coin: from + '_' + to, amount: amt, type: 'convert' });
+  const senderH = { ...currentUser.holdings };
+  senderH[selectedCoin] = Math.max(0, (senderH[selectedCoin] || 0) - amt / prices[selectedCoin]);
+  const recipH = { ...(recipient.holdings || { BTC:0, ETH:0, USDT:0, SOL:0 }) };
+  recipH[selectedCoin] = (recipH[selectedCoin] || 0) + amt / prices[selectedCoin];
 
-    closeModal();
-    showToast('Sent ' + fmt(amt) + ' to ' + addr);
-    loadUserData();
-    loadTransactions();
-  }
+  const newBal = parseFloat(currentUser.balance) - amt;
+  const recipBal = parseFloat(recipient.balance) + amt;
+
+  await supa('users?id=eq.' + currentUser.id, 'PATCH', { balance: newBal, holdings: senderH });
+  await supa('users?id=eq.' + recipient.id, 'PATCH', { balance: recipBal, holdings: recipH });
+  await supa('transactions', 'POST', { from_user: currentUser.id, to_user: recipient.id, coin: selectedCoin, amount: amt, type: 'send' });
+
+  closeModal();
+  showToast('Sent ' + fmt(amt) + ' to ' + addr);
+  loadUserData();
+  loadTransactions();
+}
 
   async function doConvert() {
   const amt = parseFloat(document.getElementById('c-amt').value) || 0;
