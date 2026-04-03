@@ -179,6 +179,104 @@
   .cashout-btn { padding: 10px; background: var(--color-background-success); color: var(--color-text-success); border: none; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; }
   .cashout-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
+  /* ===================== MINES ===================== */
+  .mines-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .mines-select { padding: 8px 10px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); color: var(--color-text-primary); font-size: 14px; outline: none; font-family: var(--font-sans); }
+  .mines-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .mine-cell {
+    aspect-ratio: 1;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-secondary);
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, transform 0.1s, border-color 0.12s;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .mine-cell:hover:not(.revealed):not(.disabled) {
+    background: var(--color-background-tertiary);
+    border-color: var(--color-border-primary);
+    transform: scale(1.04);
+  }
+  .mine-cell.revealed-gem {
+    background: var(--color-background-success);
+    border-color: var(--color-text-success);
+    cursor: default;
+  }
+  .mine-cell.revealed-mine {
+    background: var(--color-background-danger);
+    border-color: var(--color-text-danger);
+    cursor: default;
+    animation: mineShake 0.3s ease;
+  }
+  .mine-cell.show-mine {
+    background: #3a1212;
+    border-color: #6b2222;
+    cursor: default;
+  }
+  .mine-cell.disabled {
+    cursor: default;
+  }
+  .mines-multiplier {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .mines-multiplier .mult-val {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-success);
+    font-family: var(--font-mono);
+  }
+  .mines-profit {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+  .cashout-mines-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 8px;
+  }
+  .cashout-mines-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .cashout-mines-btn:hover:not(:disabled) { opacity: 0.85; }
+
+  @keyframes mineShake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+  @keyframes gemPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .mine-cell.revealed-gem .cell-inner {
+    animation: gemPop 0.25s ease forwards;
+  }
+
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes coinSpin { 0%,100% { transform: scaleX(1); } 50% { transform: scaleX(0.1); } }
   @keyframes diceRoll { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
@@ -306,12 +404,52 @@
         <button class="half-btn" onclick="maxBet('crash-bet')">Max</button>
       </div>
       <div class="crash-display" id="crash-display">1.00x</div>
-      <div class="crash-bar-wrap"><div class="crash-bar" id="crash-bar"></div></div>
+      <!-- Progress bar: hidden by default, only shown if lucky 1-in-20 -->
+      <div class="crash-bar-wrap" id="crash-bar-wrap" style="display:none;"><div class="crash-bar" id="crash-bar"></div></div>
       <div class="game-result" id="crash-result">Place your bet and start</div>
       <div class="crash-btns">
         <button class="play-btn" id="crash-start-btn" onclick="startCrash()">Start</button>
         <button class="cashout-btn" id="crash-cashout-btn" onclick="cashOut()" disabled>Cash Out</button>
       </div>
+    </div>
+
+    <!-- MINES -->
+    <div class="game-card">
+      <div class="game-title">💣 Mines</div>
+      <div class="game-desc">Reveal gems to grow your multiplier. Hit a mine and lose it all. Cash out anytime.</div>
+      <div class="bet-row">
+        <input class="bet-input" type="number" id="mines-bet" placeholder="Bet amount ($)" min="0" />
+        <button class="half-btn" onclick="halfBet('mines-bet')">½</button>
+        <button class="half-btn" onclick="maxBet('mines-bet')">Max</button>
+      </div>
+      <div class="mines-controls">
+        <select class="mines-select" id="mines-count" onchange="updateMinesMultiplier()">
+          <option value="1">1 Mine</option>
+          <option value="3" selected>3 Mines</option>
+          <option value="5">5 Mines</option>
+          <option value="10">10 Mines</option>
+          <option value="15">15 Mines</option>
+          <option value="20">20 Mines</option>
+          <option value="24">24 Mines</option>
+        </select>
+        <div style="display:flex; align-items:center; padding:8px 10px; background:var(--color-background-secondary); border:0.5px solid var(--color-border-secondary); border-radius:var(--border-radius-md);">
+          <span style="font-size:12px; color:var(--color-text-tertiary); margin-right:6px;">Next:</span>
+          <span id="mines-next-mult" style="font-size:14px; font-weight:600; color:var(--color-text-success); font-family:var(--font-mono);">1.03x</span>
+        </div>
+      </div>
+      <div class="mines-multiplier">
+        <div>
+          <div style="font-size:11px; color:var(--color-text-tertiary); margin-bottom:2px;">Current multiplier</div>
+          <div class="mult-val" id="mines-current-mult">1.00x</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px; color:var(--color-text-tertiary); margin-bottom:2px;">Profit</div>
+          <div class="mines-profit" id="mines-profit-display">$0.00</div>
+        </div>
+      </div>
+      <div class="mines-grid" id="mines-grid"></div>
+      <button class="cashout-mines-btn" id="mines-cashout-btn" onclick="minesCashout()" disabled>💎 Cash Out</button>
+      <button class="play-btn" id="mines-start-btn" onclick="startMines()">Start Game</button>
     </div>
 
   </div>
@@ -340,12 +478,13 @@
   let currentUser = null;
   let authMode = 'login';
 
-  // SESSION
   function saveSession(user) { localStorage.setItem('cv_user', JSON.stringify(user)); }
   function clearSession() { localStorage.removeItem('cv_user'); }
   window.addEventListener('load', () => {
     const saved = localStorage.getItem('cv_user');
     if (saved) { currentUser = JSON.parse(saved); showDash(); }
+    buildMinesGrid();
+    updateMinesMultiplier();
   });
 
   async function supa(path, method, body) {
@@ -425,6 +564,7 @@
     document.getElementById('casino').style.display = 'block';
     updateCasinoBal();
     resetCrash();
+    resetMines();
   }
 
   function hideCasino() {
@@ -576,13 +716,16 @@
     resultEl.textContent = diceFaces[roll - 1] + ' Rolled ' + roll + ' — ' + (won ? 'You won ' + fmt(bet * 4) + '!' : 'You lost ' + fmt(bet));
   }
 
-  // CRASH
+  // ===================== CRASH =====================
+  // The progress bar is now hidden by default.
+  // 1-in-20 chance it's shown (lucky bug mode).
   let crashInterval = null;
   let crashMultiplier = 1.0;
   let crashPoint = 1.0;
   let crashBet = 0;
   let crashRunning = false;
   let cashedOut = false;
+  let crashShowBar = false; // whether the bar is visible this round
 
   function generateCrashPoint() {
     const r = Math.random();
@@ -595,11 +738,12 @@
   function resetCrash() {
     clearInterval(crashInterval);
     crashRunning = false; cashedOut = false;
-    crashMultiplier = 1.0; crashBet = 0;
+    crashMultiplier = 1.0; crashBet = 0; crashShowBar = false;
     document.getElementById('crash-display').textContent = '1.00x';
     document.getElementById('crash-display').className = 'crash-display';
     document.getElementById('crash-bar').style.width = '0%';
     document.getElementById('crash-bar').className = 'crash-bar';
+    document.getElementById('crash-bar-wrap').style.display = 'none';
     document.getElementById('crash-result').className = 'game-result';
     document.getElementById('crash-result').textContent = 'Place your bet and start';
     document.getElementById('crash-start-btn').disabled = false;
@@ -614,6 +758,15 @@
     crashMultiplier = 1.0;
     crashRunning = true;
     cashedOut = false;
+
+    // 1-in-20 chance to show the bar (lucky bug)
+    crashShowBar = Math.random() < (1 / 20);
+    if (crashShowBar) {
+      document.getElementById('crash-bar-wrap').style.display = 'block';
+    } else {
+      document.getElementById('crash-bar-wrap').style.display = 'none';
+    }
+
     document.getElementById('crash-start-btn').disabled = true;
     document.getElementById('crash-cashout-btn').disabled = false;
     document.getElementById('crash-result').className = 'game-result';
@@ -622,10 +775,15 @@
 
     crashInterval = setInterval(async () => {
       crashMultiplier += 0.03 + crashMultiplier * 0.01;
-      const pct = Math.min(100, ((crashMultiplier - 1) / (crashPoint - 1)) * 100);
+
       document.getElementById('crash-display').textContent = crashMultiplier.toFixed(2) + 'x';
-      document.getElementById('crash-bar').style.width = pct + '%';
-      if (pct > 60) document.getElementById('crash-bar').className = 'crash-bar danger';
+
+      // Only update bar if showing
+      if (crashShowBar) {
+        const pct = Math.min(100, ((crashMultiplier - 1) / (crashPoint - 1)) * 100);
+        document.getElementById('crash-bar').style.width = pct + '%';
+        if (pct > 60) document.getElementById('crash-bar').className = 'crash-bar danger';
+      }
 
       if (crashMultiplier >= crashPoint && !cashedOut) {
         clearInterval(crashInterval);
@@ -652,6 +810,221 @@
     document.getElementById('crash-result').textContent = 'Cashed out at ' + crashMultiplier.toFixed(2) + 'x — You won ' + fmt(winnings - crashBet) + '!';
     document.getElementById('crash-cashout-btn').disabled = true;
     setTimeout(resetCrash, 3000);
+  }
+
+  // ===================== MINES =====================
+  const MINES_TOTAL = 25; // 5x5 grid
+  let minesBoard = [];       // array of 25 booleans (true = mine)
+  let minesRevealed = [];    // array of 25 booleans (true = revealed)
+  let minesActive = false;
+  let minesGemsFound = 0;
+  let minesBet = 0;
+  let minesCount = 3;
+  let minesMultiplier = 1.0;
+
+  // Multiplier calculation: house edge ~2%, grows per gem revealed
+  // Uses hypergeometric-style approach: multiplier = (safe_total / safe_remaining)^gemsFound * (1 - house_edge)
+  function calcMinesMultiplier(gemsFound, mineCount) {
+    if (gemsFound === 0) return 1.0;
+    const totalCells = MINES_TOTAL;
+    const safeCells = totalCells - mineCount;
+    let mult = 1.0;
+    for (let i = 0; i < gemsFound; i++) {
+      mult *= (totalCells - mineCount - i) / (totalCells - i);
+    }
+    // Invert and apply house edge
+    mult = (1 / mult) * 0.97;
+    return Math.max(1.0, mult);
+  }
+
+  function calcNextMinesMultiplier(gemsFound, mineCount) {
+    return calcMinesMultiplier(gemsFound + 1, mineCount);
+  }
+
+  function updateMinesMultiplier() {
+    minesCount = parseInt(document.getElementById('mines-count').value) || 3;
+    const next = calcNextMinesMultiplier(minesGemsFound, minesCount);
+    document.getElementById('mines-next-mult').textContent = next.toFixed(2) + 'x';
+  }
+
+  function buildMinesGrid() {
+    const grid = document.getElementById('mines-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < MINES_TOTAL; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'mine-cell disabled';
+      cell.dataset.index = i;
+      cell.innerHTML = '<span class="cell-inner">💎</span>';
+      cell.style.opacity = '0.3';
+      cell.onclick = () => revealCell(i);
+      grid.appendChild(cell);
+    }
+  }
+
+  function resetMines() {
+    minesBoard = [];
+    minesRevealed = Array(MINES_TOTAL).fill(false);
+    minesActive = false;
+    minesGemsFound = 0;
+    minesBet = 0;
+    minesMultiplier = 1.0;
+
+    document.getElementById('mines-current-mult').textContent = '1.00x';
+    document.getElementById('mines-profit-display').textContent = '$0.00';
+    document.getElementById('mines-cashout-btn').disabled = true;
+    document.getElementById('mines-start-btn').disabled = false;
+    document.getElementById('mines-start-btn').textContent = 'Start Game';
+    document.getElementById('mines-bet').disabled = false;
+    document.getElementById('mines-count').disabled = false;
+
+    // Reset grid visually
+    const cells = document.querySelectorAll('.mine-cell');
+    cells.forEach(cell => {
+      cell.className = 'mine-cell disabled';
+      cell.style.opacity = '0.3';
+      cell.innerHTML = '<span class="cell-inner">💎</span>';
+    });
+
+    updateMinesMultiplier();
+  }
+
+  function placeMines(mineCount, firstClick) {
+    // Place mines randomly, never on firstClick
+    const positions = [];
+    const available = Array.from({length: MINES_TOTAL}, (_, i) => i).filter(i => i !== firstClick);
+    while (positions.length < mineCount && available.length > 0) {
+      const idx = Math.floor(Math.random() * available.length);
+      positions.push(available.splice(idx, 1)[0]);
+    }
+    const board = Array(MINES_TOTAL).fill(false);
+    positions.forEach(p => board[p] = true);
+    return board;
+  }
+
+  async function startMines() {
+    const bet = getBet('mines-bet');
+    if (!bet) return;
+    minesCount = parseInt(document.getElementById('mines-count').value) || 3;
+    if (minesCount >= MINES_TOTAL) { showToast('Too many mines!', true); return; }
+
+    minesBet = bet;
+    minesGemsFound = 0;
+    minesRevealed = Array(MINES_TOTAL).fill(false);
+    minesMultiplier = 1.0;
+    minesActive = true;
+
+    // Deduct bet immediately
+    await updateBalance(-bet, 'Mines (bet)');
+
+    document.getElementById('mines-start-btn').disabled = true;
+    document.getElementById('mines-bet').disabled = true;
+    document.getElementById('mines-count').disabled = true;
+    document.getElementById('mines-cashout-btn').disabled = false;
+    document.getElementById('mines-current-mult').textContent = '1.00x';
+    document.getElementById('mines-profit-display').textContent = '-' + fmt(bet);
+
+    const nextMult = calcNextMinesMultiplier(0, minesCount);
+    document.getElementById('mines-next-mult').textContent = nextMult.toFixed(2) + 'x';
+
+    // Activate grid
+    const cells = document.querySelectorAll('.mine-cell');
+    cells.forEach(cell => {
+      cell.className = 'mine-cell';
+      cell.style.opacity = '1';
+    });
+
+    // Board will be generated on first click (fair play)
+    minesBoard = null;
+  }
+
+  async function revealCell(index) {
+    if (!minesActive) return;
+    if (minesRevealed[index]) return;
+
+    // Generate board on first click so first click is never a mine
+    if (minesBoard === null) {
+      minesBoard = placeMines(minesCount, index);
+    }
+
+    minesRevealed[index] = true;
+    const cell = document.querySelector(`.mine-cell[data-index="${index}"]`);
+
+    if (minesBoard[index]) {
+      // HIT A MINE
+      minesActive = false;
+      cell.className = 'mine-cell revealed-mine disabled';
+      cell.innerHTML = '<span class="cell-inner">💣</span>';
+
+      // Reveal all other mines
+      minesBoard.forEach((isMine, i) => {
+        if (isMine && i !== index) {
+          const c = document.querySelector(`.mine-cell[data-index="${i}"]`);
+          c.className = 'mine-cell show-mine disabled';
+          c.innerHTML = '<span class="cell-inner">💣</span>';
+          c.style.opacity = '0.6';
+        }
+      });
+
+      // Disable all cells
+      document.querySelectorAll('.mine-cell').forEach(c => c.classList.add('disabled'));
+
+      document.getElementById('mines-cashout-btn').disabled = true;
+      document.getElementById('mines-current-mult').textContent = '💥 BUST';
+      document.getElementById('mines-current-mult').style.color = 'var(--color-text-danger)';
+      document.getElementById('mines-profit-display').textContent = '-' + fmt(minesBet);
+      showToast('💣 You hit a mine! Lost ' + fmt(minesBet), true);
+
+      await new Promise(r => setTimeout(r, 2000));
+      document.getElementById('mines-current-mult').style.color = '';
+      document.getElementById('mines-start-btn').disabled = false;
+      document.getElementById('mines-start-btn').textContent = 'Play Again';
+      document.getElementById('mines-bet').disabled = false;
+      document.getElementById('mines-count').disabled = false;
+
+    } else {
+      // SAFE - GEM
+      minesGemsFound++;
+      cell.className = 'mine-cell revealed-gem disabled';
+      cell.innerHTML = '<span class="cell-inner">💎</span>';
+
+      minesMultiplier = calcMinesMultiplier(minesGemsFound, minesCount);
+      const profit = (minesBet * minesMultiplier) - minesBet;
+
+      document.getElementById('mines-current-mult').textContent = minesMultiplier.toFixed(2) + 'x';
+      document.getElementById('mines-current-mult').style.color = 'var(--color-text-success)';
+      document.getElementById('mines-profit-display').textContent = '+' + fmt(profit);
+
+      const safeRemaining = MINES_TOTAL - minesCount - minesGemsFound;
+      if (safeRemaining === 0) {
+        // Auto cashout — found all gems
+        await minesCashout();
+      } else {
+        const nextMult = calcNextMinesMultiplier(minesGemsFound, minesCount);
+        document.getElementById('mines-next-mult').textContent = nextMult.toFixed(2) + 'x';
+      }
+    }
+  }
+
+  async function minesCashout() {
+    if (!minesActive) return;
+    minesActive = false;
+
+    const winnings = minesBet * minesMultiplier;
+    const profit = winnings - minesBet;
+
+    await updateBalance(winnings, 'Mines (cashout)');
+
+    document.querySelectorAll('.mine-cell').forEach(c => c.classList.add('disabled'));
+    document.getElementById('mines-cashout-btn').disabled = true;
+    document.getElementById('mines-profit-display').textContent = '+' + fmt(profit);
+
+    showToast('💎 Cashed out at ' + minesMultiplier.toFixed(2) + 'x — Won ' + fmt(profit) + '!');
+
+    await new Promise(r => setTimeout(r, 1500));
+    document.getElementById('mines-start-btn').disabled = false;
+    document.getElementById('mines-start-btn').textContent = 'Play Again';
+    document.getElementById('mines-bet').disabled = false;
+    document.getElementById('mines-count').disabled = false;
   }
 
   // WALLET MODALS
