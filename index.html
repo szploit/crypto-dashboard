@@ -944,31 +944,30 @@
     const cell = document.querySelector(`.mine-cell[data-index="${index}"]`);
 
     if (minesBoard[index]) {
-      // HIT A MINE
-      minesActive = false;
-      cell.className = 'mine-cell revealed-mine disabled';
-      cell.innerHTML = '<span class="cell-inner">💣</span>';
+  // HIT A MINE
+  minesActive = false;
+  cell.className = 'mine-cell revealed-mine disabled';
+  cell.innerHTML = '<span class="cell-inner">💣</span>';
 
-      // Reveal all other mines
-      minesBoard.forEach((isMine, i) => {
-        if (isMine && i !== index) {
-          const c = document.querySelector(`.mine-cell[data-index="${i}"]`);
-          c.className = 'mine-cell show-mine disabled';
-          c.innerHTML = '<span class="cell-inner">💣</span>';
-          c.style.opacity = '0.6';
-        }
-      });
+  // Reveal all other mines
+  minesBoard.forEach((isMine, i) => {
+    if (isMine && i !== index) {
+      const c = document.querySelector(`.mine-cell[data-index="${i}"]`);
+      c.className = 'mine-cell show-mine disabled';
+      c.innerHTML = '<span class="cell-inner">💣</span>';
+      c.style.opacity = '0.6';
+    }
+  });
 
-      // Disable all cells
+      
       document.querySelectorAll('.mine-cell').forEach(c => c.classList.add('disabled'));
-
       document.getElementById('mines-cashout-btn').disabled = true;
       document.getElementById('mines-current-mult').textContent = '💥 BUST';
       document.getElementById('mines-current-mult').style.color = 'var(--color-text-danger)';
       document.getElementById('mines-profit-display').textContent = '-' + fmt(minesBet);
       showToast('💣 You hit a mine! Lost ' + fmt(minesBet), true);
-
-      resetMines();
+      setTimeout(() => resetMines(), 1200);
+      
       document.getElementById('mines-start-btn').disabled = false;
       document.getElementById('mines-start-btn').textContent = 'Play Again';
       document.getElementById('mines-bet').disabled = false;
