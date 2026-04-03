@@ -572,26 +572,27 @@
   }
 
   async function doConvert() {
-    const amt = parseFloat(document.getElementById('c-amt').value) || 0;
-    const from = document.getElementById('c-from').value;
-    const to = document.getElementById('c-to').value;
-    if (amt <= 0) { showToast('Enter an amount', true); return; }
-    const coinValueUsd = (currentUser.holdings[coin] || 0) * prices[coin];
-    if (amt > coinValueUsd) { showToast('Insufficient ' + coin + ' balance', true); return; }
-    if (from === to) { showToast('Pick different coins', true); return; }
+  const amt = parseFloat(document.getElementById('c-amt').value) || 0;
+  const from = document.getElementById('c-from').value;
+  const to = document.getElementById('c-to').value;
+  if (amt <= 0) { showToast('Enter an amount', true); return; }
+  if (from === to) { showToast('Pick different coins', true); return; }
 
-    const h = { ...currentUser.holdings };
-    h[from] = Math.max(0, (h[from] || 0) - amt / prices[from]);
-    h[to] = (h[to] || 0) + amt / prices[to];
+  const coinValueUsd = (currentUser.holdings[from] || 0) * prices[from];
+  if (amt > coinValueUsd) { showToast('Insufficient ' + from + ' balance', true); return; }
 
-    await supa('users?id=eq.' + currentUser.id, 'PATCH', { holdings: h });
-    await supa('transactions', 'POST', { from_user: currentUser.id, to_user: currentUser.id, coin: from + '_' + to, amount: amt, type: 'convert' });
+  const h = { ...currentUser.holdings };
+  h[from] = Math.max(0, (h[from] || 0) - amt / prices[from]);
+  h[to] = (h[to] || 0) + amt / prices[to];
 
-    closeModal();
-    showToast('Converted ' + from + ' → ' + to);
-    loadUserData();
-    loadTransactions();
-  }
+  await supa('users?id=eq.' + currentUser.id, 'PATCH', { holdings: h });
+  await supa('transactions', 'POST', { from_user: currentUser.id, to_user: currentUser.id, coin: from + '_' + to, amount: amt, type: 'convert' });
+
+  closeModal();
+  showToast('Converted ' + from + ' → ' + to);
+  loadUserData();
+  loadTransactions();
+}
 
   async function doBuy() {
     const amt = parseFloat(document.getElementById('b-amt').value) || 0;
