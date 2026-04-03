@@ -848,45 +848,39 @@
   }
 
   function buildMinesGrid() {
-    const grid = document.getElementById('mines-grid');
-    grid.innerHTML = '';
-    for (let i = 0; i < MINES_TOTAL; i++) {
-      const cell = document.createElement('div');
-      cell.className = 'mine-cell disabled';
-      cell.dataset.index = i;
-      cell.innerHTML = '<span class="cell-inner">💎</span>';
-      cell.style.opacity = '0.3';
-      cell.onclick = () => revealCell(i);
-      grid.appendChild(cell);
-    }
+  const grid = document.getElementById('mines-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < MINES_TOTAL; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'mine-cell disabled';
+    cell.dataset.index = i;
+    cell.innerHTML = '<span class="cell-inner">💎</span>';
+    cell.style.opacity = '0.3';
+    cell.onclick = () => revealCell(i);
+    grid.appendChild(cell);
   }
+}
 
-  function resetMines() {
-    minesBoard = [];
-    minesRevealed = Array(MINES_TOTAL).fill(false);
-    minesActive = false;
-    minesGemsFound = 0;
-    minesBet = 0;
-    minesMultiplier = 1.0;
+ function resetMines() {
+  minesBoard = [];
+  minesRevealed = Array(MINES_TOTAL).fill(false);
+  minesActive = false;
+  minesGemsFound = 0;
+  minesBet = 0;
+  minesMultiplier = 1.0;
 
-    document.getElementById('mines-current-mult').textContent = '1.00x';
-    document.getElementById('mines-profit-display').textContent = '$0.00';
-    document.getElementById('mines-cashout-btn').disabled = true;
-    document.getElementById('mines-start-btn').disabled = false;
-    document.getElementById('mines-start-btn').textContent = 'Start Game';
-    document.getElementById('mines-bet').disabled = false;
-    document.getElementById('mines-count').disabled = false;
+  document.getElementById('mines-current-mult').textContent = '1.00x';
+  document.getElementById('mines-current-mult').style.color = '';
+  document.getElementById('mines-profit-display').textContent = '$0.00';
+  document.getElementById('mines-cashout-btn').disabled = true;
+  document.getElementById('mines-start-btn').disabled = false;
+  document.getElementById('mines-start-btn').textContent = 'Start Game';
+  document.getElementById('mines-bet').disabled = false;
+  document.getElementById('mines-count').disabled = false;
 
-    // Reset grid visually
-    const cells = document.querySelectorAll('.mine-cell');
-    cells.forEach(cell => {
-      cell.className = 'mine-cell disabled';
-      cell.style.opacity = '0.3';
-      cell.innerHTML = '<span class="cell-inner">💎</span>';
-    });
-
-    updateMinesMultiplier();
-  }
+  buildMinesGrid(); // ← this replaces the manual cell reset
+  updateMinesMultiplier();
+}
 
   function placeMines(mineCount, firstClick) {
     // Place mines randomly, never on firstClick
@@ -975,7 +969,6 @@
       showToast('💣 You hit a mine! Lost ' + fmt(minesBet), true);
 
       await new Promise(r => setTimeout(r, 2000));
-      document.getElementById('mines-current-mult').style.color = '';
       document.getElementById('mines-start-btn').disabled = false;
       document.getElementById('mines-start-btn').textContent = 'Play Again';
       document.getElementById('mines-bet').disabled = false;
@@ -1107,7 +1100,8 @@
     const h = { ...currentUser.holdings };
     h[fromCoin] = Math.max(0, (h[fromCoin] || 0) - amt / prices[fromCoin]);
     h[toCoin] = (h[toCoin] || 0) + amt / prices[toCoin];
-    await supa('users?id=eq.' + currentUser.id, 'PATCH', { holdings: h });
+    const newBal = h.BTC * prices.BTC + h.ETH * prices.ETH + h.USDT * prices.USDT + h.SOL * prices.SOL;
+    await supa('users?id=eq.' + currentUser.id, 'PATCH', { holdings: h, balance: newBal });
     await supa('transactions', 'POST', { from_user: currentUser.id, to_user: currentUser.id, coin: fromCoin + '_' + toCoin, amount: amt, type: 'convert' });
     closeModal(); showToast('Converted ' + fromCoin + ' → ' + toCoin);
     loadUserData(); loadTransactions();
