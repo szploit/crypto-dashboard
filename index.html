@@ -878,7 +878,7 @@
   document.getElementById('mines-bet').disabled = false;
   document.getElementById('mines-count').disabled = false;
 
-  buildMinesGrid(); // ← this replaces the manual cell reset
+  buildMinesGrid(); // ← fully rebuilds all cells fresh
   updateMinesMultiplier();
 }
 
@@ -968,7 +968,7 @@
       document.getElementById('mines-profit-display').textContent = '-' + fmt(minesBet);
       showToast('💣 You hit a mine! Lost ' + fmt(minesBet), true);
 
-      await new Promise(r => setTimeout(r, 2000));
+      resetMines();
       document.getElementById('mines-start-btn').disabled = false;
       document.getElementById('mines-start-btn').textContent = 'Play Again';
       document.getElementById('mines-bet').disabled = false;
