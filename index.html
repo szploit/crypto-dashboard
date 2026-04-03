@@ -563,7 +563,7 @@
 
     await supa('users?id=eq.' + currentUser.id, 'PATCH', { balance: parseFloat(currentUser.balance) - amt, holdings: senderH });
     await supa('users?id=eq.' + recipient.id, 'PATCH', { balance: parseFloat(recipient.balance) + amt, holdings: recipH });
-    await supa('transactions', 'POST', { from_user: currentUser.id, to_user: recipient.id, coin, amount: amt, type: 'send' });
+    await supa('transactions', 'POST', { from_user: currentUser.id, to_user: currentUser.id, coin: from + '_' + to, amount: amt, type: 'convert' });
 
     closeModal();
     showToast('Sent ' + fmt(amt) + ' to ' + addr);
@@ -573,23 +573,23 @@
 
   async function doConvert() {
   const amt = parseFloat(document.getElementById('c-amt').value) || 0;
-  const from = document.getElementById('c-from').value;
-  const to = document.getElementById('c-to').value;
+  const fromCoin = document.getElementById('c-from').value;
+  const toCoin = document.getElementById('c-to').value;
   if (amt <= 0) { showToast('Enter an amount', true); return; }
-  if (from === to) { showToast('Pick different coins', true); return; }
+  if (fromCoin === toCoin) { showToast('Pick different coins', true); return; }
 
-  const coinValueUsd = (currentUser.holdings[from] || 0) * prices[from];
-  if (amt > coinValueUsd) { showToast('Insufficient ' + from + ' balance', true); return; }
+  const coinValueUsd = (currentUser.holdings[fromCoin] || 0) * prices[fromCoin];
+  if (amt > coinValueUsd) { showToast('Insufficient ' + fromCoin + ' balance', true); return; }
 
   const h = { ...currentUser.holdings };
-  h[from] = Math.max(0, (h[from] || 0) - amt / prices[from]);
-  h[to] = (h[to] || 0) + amt / prices[to];
+  h[fromCoin] = Math.max(0, (h[fromCoin] || 0) - amt / prices[fromCoin]);
+  h[toCoin] = (h[toCoin] || 0) + amt / prices[toCoin];
 
   await supa('users?id=eq.' + currentUser.id, 'PATCH', { holdings: h });
-  await supa('transactions', 'POST', { from_user: currentUser.id, to_user: currentUser.id, coin: from + '_' + to, amount: amt, type: 'convert' });
+  await supa('transactions', 'POST', { from_user: currentUser.id, to_user: currentUser.id, coin: fromCoin + '_' + toCoin, amount: amt, type: 'convert' });
 
   closeModal();
-  showToast('Converted ' + from + ' → ' + to);
+  showToast('Converted ' + fromCoin + ' → ' + toCoin);
   loadUserData();
   loadTransactions();
 }
