@@ -360,7 +360,7 @@
     <span class="logo">CryptoVault</span>
     <div class="topbar-right">
       <span class="badge">● Live</span>
-      <button class="casino-btn" onclick="showCasino()">🎰 Casino</button>
+      <button class="casino-btn" onclick="showCasino()">Casino</button>
       <button class="logout-btn" onclick="logout()">Log out</button>
     </div>
   </div>
@@ -458,7 +458,7 @@
   <div class="lobby-label">Games</div>
   <div class="lobby-grid">
     <div class="lobby-card" onclick="openGame('coinflip')">
-      <div class="lobby-icon" style="background:linear-gradient(135deg,#b45309,#92400e);">🪙</div>
+      <div class="lobby-icon" style="background:linear-gradient(135deg,#b45309,#92400e);">🥮</div>
       <div class="lobby-card-name">Coin Flip</div>
       <div class="lobby-card-sub">2× payout</div>
     </div>
@@ -902,7 +902,7 @@
     const box = document.getElementById('modal-box');
     bg.classList.add('open');
     box.className = 'modal';
-    document.getElementById('modal-title').textContent = '💸 Cash Out';
+    document.getElementById('modal-title').textContent = 'Cash Out';
     document.getElementById('modal-body').innerHTML = `
       <input type="number" id="co-amt" placeholder="Amount ($)" min="25" max="${bal.toFixed(2)}" value="${bal.toFixed(2)}" />
       <div class="co-hint">Minimum $25.00 &nbsp;·&nbsp; Available: ${fmt(bal)}</div>
