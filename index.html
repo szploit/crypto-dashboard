@@ -257,8 +257,9 @@
 
   /* BLACKJACK TABLE */
   .bj-table-wrap { background: #0d2818; border: 2px solid rgba(255,255,255,0.08); border-radius: 80px; padding: 2rem 1.5rem; margin-bottom: 1.25rem; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
-  .bj-zone-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
-  .bj-cards-row { display: flex; gap: 10px; flex-wrap: wrap; min-height: 90px; align-items: center; }
+  .bj-zone-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; text-align: center; }
+  .bj-score-wrap { text-align: center; margin-top: 8px; }
+  .bj-cards-row { display: flex; gap: 10px; flex-wrap: wrap; min-height: 90px; align-items: center; justify-content: center; }
   .bj-score-badge { display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.12); color: #fff; font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-top: 8px; font-family: var(--font-mono); }
   .bj-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 1rem 0; }
   .bj-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 4px; }
@@ -360,7 +361,7 @@
     <span class="logo">CryptoVault</span>
     <div class="topbar-right">
       <span class="badge">● Live</span>
-      <button class="casino-btn" onclick="showCasino()">Casino</button>
+      <button class="casino-btn" onclick="showCasino()">🎰 Casino</button>
       <button class="logout-btn" onclick="logout()">Log out</button>
     </div>
   </div>
@@ -458,7 +459,7 @@
   <div class="lobby-label">Games</div>
   <div class="lobby-grid">
     <div class="lobby-card" onclick="openGame('coinflip')">
-      <div class="lobby-icon" style="background:linear-gradient(135deg,#b45309,#92400e);">🥮</div>
+      <div class="lobby-icon" style="background:linear-gradient(135deg,#b45309,#92400e);">🪙</div>
       <div class="lobby-card-name">Coin Flip</div>
       <div class="lobby-card-sub">2× payout</div>
     </div>
@@ -701,6 +702,8 @@
             <button class="cashout-btn" id="crash-cashout-btn" onclick="cashOut()" disabled>Cash Out</button>
           </div>
         </div>`;
+      // Re-init crash state after DOM is ready
+      crashRunning=false; cashedOut=false; crashMultiplier=1.0; crashBet=0;
     } else if (game === 'mines') {
       content.innerHTML = `
         <div class="game-inner">
@@ -902,7 +905,7 @@
     const box = document.getElementById('modal-box');
     bg.classList.add('open');
     box.className = 'modal';
-    document.getElementById('modal-title').textContent = 'Cash Out';
+    document.getElementById('modal-title').textContent = '💸 Cash Out';
     document.getElementById('modal-body').innerHTML = `
       <input type="number" id="co-amt" placeholder="Amount ($)" min="25" max="${bal.toFixed(2)}" value="${bal.toFixed(2)}" />
       <div class="co-hint">Minimum $25.00 &nbsp;·&nbsp; Available: ${fmt(bal)}</div>
@@ -1067,15 +1070,12 @@
   function resetCrash() {
     clearInterval(crashInterval);
     crashRunning=false; cashedOut=false; crashMultiplier=1.0; crashBet=0; crashShowBar=false;
-    document.getElementById('crash-display').textContent='1.00x';
-    document.getElementById('crash-display').className='crash-display';
-    document.getElementById('crash-bar').style.width='0%';
-    document.getElementById('crash-bar').className='crash-bar';
-    document.getElementById('crash-bar-wrap').style.display='none';
-    document.getElementById('crash-result').className='game-result';
-    document.getElementById('crash-result').textContent='Place your bet and start';
-    document.getElementById('crash-start-btn').disabled=false;
-    document.getElementById('crash-cashout-btn').disabled=true;
+    const cd=document.getElementById('crash-display'); if(cd){cd.textContent='1.00x';cd.className='crash-display';}
+    const cb=document.getElementById('crash-bar'); if(cb){cb.style.width='0%';cb.className='crash-bar';}
+    const cbw=document.getElementById('crash-bar-wrap'); if(cbw) cbw.style.display='none';
+    const cr=document.getElementById('crash-result'); if(cr){cr.className='game-result';cr.textContent='Place your bet and start';}
+    const csb=document.getElementById('crash-start-btn'); if(csb) csb.disabled=false;
+    const ccb=document.getElementById('crash-cashout-btn'); if(ccb) ccb.disabled=true;
   }
   async function startCrash() {
     const bet = getBet('crash-bet'); if (!bet) return;
