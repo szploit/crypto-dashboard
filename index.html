@@ -64,9 +64,9 @@
 
   /* BALANCE CARD */
   .balance-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
-  .balance-card-top { margin-bottom: 6px; }
+  .balance-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
   .bal-label { font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
-  .cashout-pill-btn { font-size: 13px; padding: 12px; background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; font-weight: 500; transition: background 0.15s; text-align: left; width: 100%; margin-top: 10px; display: block; }
+  .cashout-pill-btn { font-size: 12px; padding: 5px 10px; background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; font-weight: 500; transition: background 0.15s; }
   .cashout-pill-btn:hover:not(:disabled) { background: var(--color-background-secondary); }
   .cashout-pill-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .bal-amount { font-size: 36px; font-weight: 500; color: var(--color-text-primary); }
@@ -322,7 +322,7 @@
   <div class="balance-card">
     <div class="balance-card-top">
       <div class="bal-label">Total balance</div>
-      <button class="cashout-pill-btn" id="cashout-pill-btn" onclick="openCashoutModal()" disabled><span class="btn-icon">💸</span> Cash Out</button>
+      <button class="cashout-pill-btn" id="cashout-pill-btn" onclick="openCashoutModal()" disabled>💸 Cash Out</button>
     </div>
     <div class="bal-amount" id="bal-display">$0.00</div>
     <div class="bal-hint" id="bal-hint">Buy crypto to get started</div>
