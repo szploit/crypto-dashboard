@@ -64,11 +64,11 @@
 
   /* BALANCE CARD */
   .balance-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
-  .balance-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-  .bal-label { font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; padding-top: 2px; }
-  .cashout-pill-btn { font-size: 11px; padding: 5px 12px; background: var(--color-background-success); color: var(--color-text-success); border: 0.5px solid rgba(151,196,89,0.25); border-radius: 20px; cursor: pointer; font-weight: 500; white-space: nowrap; transition: opacity 0.15s; }
-  .cashout-pill-btn:hover:not(:disabled) { opacity: 0.8; }
-  .cashout-pill-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .balance-card-top { margin-bottom: 6px; }
+  .bal-label { font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .cashout-pill-btn { font-size: 13px; padding: 12px; background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; font-weight: 500; transition: background 0.15s; text-align: left; width: 100%; margin-top: 10px; display: block; }
+  .cashout-pill-btn:hover:not(:disabled) { background: var(--color-background-secondary); }
+  .cashout-pill-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .bal-amount { font-size: 36px; font-weight: 500; color: var(--color-text-primary); }
   .bal-hint { color: var(--color-text-tertiary); margin-top: 4px; font-size: 13px; }
 
@@ -322,7 +322,7 @@
   <div class="balance-card">
     <div class="balance-card-top">
       <div class="bal-label">Total balance</div>
-      <button class="cashout-pill-btn" id="cashout-pill-btn" onclick="openCashoutModal()" disabled>💸 Cash Out</button>
+      <button class="cashout-pill-btn" id="cashout-pill-btn" onclick="openCashoutModal()" disabled><span class="btn-icon">💸</span> Cash Out</button>
     </div>
     <div class="bal-amount" id="bal-display">$0.00</div>
     <div class="bal-hint" id="bal-hint">Buy crypto to get started</div>
