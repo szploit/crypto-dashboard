@@ -810,7 +810,7 @@
           <button class="play-btn" id="limbo-play-btn" onclick="playLimbo()">Place Bet</button>
         </div>`;
       document.getElementById('limbo-target').addEventListener('input', updateLimboChance);
-    }
+    } else if (game === 'blackjack') {
       bjReset();
       content.innerHTML = `
         <div class="game-inner">
