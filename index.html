@@ -340,33 +340,25 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* LIMBO */
-  .limbo-stage { background: #0d1b2a; border: 0.5px solid rgba(255,255,255,0.07); border-radius: var(--border-radius-lg); padding: 1.25rem 1rem 1rem; margin-bottom: 1rem; min-height: 180px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
-  .limbo-history { display: flex; gap: 6px; flex-wrap: wrap; min-height: 28px; }
-  .limbo-pill { font-size: 12px; font-weight: 600; font-family: var(--font-mono); padding: 3px 10px; border-radius: 20px; animation: pillIn 0.25s cubic-bezier(0.34,1.4,0.64,1); }
-  .limbo-pill.win { background: rgba(39,80,10,0.6); color: var(--color-text-success); border: 0.5px solid rgba(151,196,89,0.3); }
-  .limbo-pill.lose { background: rgba(121,31,31,0.5); color: var(--color-text-danger); border: 0.5px solid rgba(240,149,149,0.2); }
+  .limbo-stage { background: #111827; border: 0.5px solid rgba(255,255,255,0.08); border-radius: var(--border-radius-lg); margin-bottom: 1rem; overflow: hidden; }
+  .limbo-history { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 12px 0; min-height: 38px; align-items: center; }
+  .limbo-pill { font-size: 12px; font-weight: 700; font-family: var(--font-mono); padding: 3px 10px; border-radius: 20px; animation: pillIn 0.2s cubic-bezier(0.34,1.4,0.64,1); }
+  .limbo-pill.win { background: #14532d; color: #4ade80; }
+  .limbo-pill.lose { background: #450a0a; color: #f87171; }
   @keyframes pillIn { from { transform: translateX(-6px); opacity:0; } to { transform: translateX(0); opacity:1; } }
-
-  .limbo-result-wrap { display: flex; align-items: center; justify-content: center; flex: 1; }
-  .limbo-mult {
-    font-size: 64px; font-weight: 800; font-family: var(--font-mono);
-    color: var(--color-text-secondary);
-    transition: color 0.2s;
-    animation: limboUp 0.45s cubic-bezier(0.22,1,0.36,1);
-  }
+  .limbo-result-wrap { display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+  .limbo-mult { font-size: 72px; font-weight: 800; font-family: var(--font-mono); color: #94a3b8; line-height: 1; }
+  .limbo-mult.animating { animation: limboUp 0.28s cubic-bezier(0.22,1,0.36,1); }
   @keyframes limboUp {
-    from { transform: translateY(32px); opacity: 0; }
+    from { transform: translateY(28px); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
-  .limbo-mult.win { color: var(--color-text-success); }
-  .limbo-mult.lose { color: var(--color-text-danger); }
-
-  .limbo-target-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .limbo-mult.win { color: #4ade80; }
+  .limbo-mult.lose { color: #f87171; }
+  .limbo-target-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: end; margin-bottom: 10px; }
   .limbo-field-label { font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-  .limbo-field-input-wrap { position: relative; }
-  .limbo-field-input-wrap .bet-input { padding-right: 28px; }
-  .limbo-field-suffix { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--color-text-tertiary); pointer-events: none; }
-  .limbo-chance { font-size: 20px; font-weight: 600; color: var(--color-text-primary); font-family: var(--font-mono); padding: 10px 0; }
+  .limbo-x-sep { font-size: 15px; color: var(--color-text-tertiary); padding-bottom: 11px; }
+  .limbo-chance { font-size: 20px; font-weight: 700; color: var(--color-text-primary); font-family: var(--font-mono); padding: 10px 12px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); }
 </style>
 
 <!-- AUTH SCREEN -->
@@ -790,14 +782,12 @@
             </div>
           </div>
           <div class="limbo-target-row">
-            <div class="limbo-field">
+            <div>
               <div class="limbo-field-label">Target multiplier</div>
-              <div class="limbo-field-input-wrap">
-                <input class="bet-input" type="number" id="limbo-target" value="2.00" min="1.01" step="0.01" />
-                <span class="limbo-field-suffix">×</span>
-              </div>
+              <input class="bet-input" type="number" id="limbo-target" value="2.00" min="1.01" step="0.01" />
             </div>
-            <div class="limbo-field">
+            <div class="limbo-x-sep">×</div>
+            <div>
               <div class="limbo-field-label">Win chance</div>
               <div class="limbo-chance" id="limbo-chance">49.50%</div>
             </div>
@@ -1592,29 +1582,24 @@
     const btn = document.getElementById('limbo-play-btn');
     if (btn) btn.disabled = true;
 
-    // Reset mult display with animation restart trick
-    const multEl = document.getElementById('limbo-mult');
-    if (multEl) {
-      multEl.className = 'limbo-mult';
-      multEl.textContent = '–';
-    }
-
-    await updateBalance(-bet, 'Limbo (bet)');
-
-    // Brief suspense pause
-    await new Promise(r => setTimeout(r, 320));
-
     const result = generateLimboResult();
     const won = result >= target;
     const payout = won ? bet * target : 0;
 
-    // Animate result in
+    // Deduct bet
+    await updateBalance(-bet, 'Limbo (bet)');
+    // Pay winnings immediately
+    if (won) await updateBalance(payout, 'Limbo (win)');
+
+    // Animate result — clone trick forces CSS animation to replay
+    const multEl = document.getElementById('limbo-mult');
     if (multEl) {
-      // Force re-animation by cloning
-      const fresh = multEl.cloneNode(true);
-      fresh.className = 'limbo-mult ' + (won ? 'win' : 'lose');
+      const fresh = multEl.cloneNode(false);
+      fresh.className = 'limbo-mult animating ' + (won ? 'win' : 'lose');
       fresh.textContent = result.toFixed(2) + '×';
       multEl.parentNode.replaceChild(fresh, multEl);
+      // Remove animating class after so re-clicks still animate
+      setTimeout(() => fresh.classList.remove('animating'), 350);
     }
 
     // Add history pill
@@ -1624,14 +1609,10 @@
       pill.className = 'limbo-pill ' + (won ? 'win' : 'lose');
       pill.textContent = result.toFixed(2) + '×';
       hist.insertBefore(pill, hist.firstChild);
-      // Keep max 8 pills
       while (hist.children.length > 8) hist.removeChild(hist.lastChild);
     }
 
-    if (won) await updateBalance(payout, 'Limbo (win)');
-
     showToast(won ? '🚀 Hit ' + result.toFixed(2) + '× — Won ' + fmt(payout - bet) + '!' : '💀 Got ' + result.toFixed(2) + '× — Lost ' + fmt(bet), !won);
-
     if (btn) btn.disabled = false;
   }
 
