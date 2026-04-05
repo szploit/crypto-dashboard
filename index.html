@@ -55,6 +55,15 @@
   .logo { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
   .topbar-right { display: flex; align-items: center; gap: 10px; }
   .badge { font-size: 11px; padding: 3px 8px; background: var(--color-background-success); color: var(--color-text-success); border-radius: 20px; }
+  .admin-badge { background: #450a0a; color: #f87171; }
+  .cf-seq-builder { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 1; }
+  .cf-seq-btn { font-size: 12px; padding: 3px 10px; background: #1c1c1a; border: 0.5px solid #b45309; border-radius: 20px; color: #f59e0b; cursor: pointer; font-weight: 600; }
+  .cf-seq-btn:hover { background: #2a1a00; }
+  .cf-seq-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+  .cf-seq-pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 700; }
+  .cf-seq-pill.heads { background: #1a3a1a; color: #4ade80; }
+  .cf-seq-pill.tails { background: #1a1a3a; color: #93c5fd; }
+  .cf-seq-clear { font-size: 11px; padding: 2px 7px; background: transparent; border: 0.5px solid rgba(240,100,100,0.4); border-radius: 20px; color: #f87171; cursor: pointer; margin-left: 4px; }
   .casino-btn { font-size: 12px; padding: 4px 10px; background: var(--color-background-warning); color: var(--color-text-warning); border: none; border-radius: 20px; cursor: pointer; font-weight: 500; }
   .casino-btn:hover { opacity: 0.85; }
   .logout-btn { font-size: 12px; color: var(--color-text-tertiary); background: none; border: none; cursor: pointer; padding: 4px 8px; }
@@ -388,6 +397,7 @@
     <span class="logo">CryptoVault</span>
     <div class="topbar-right">
       <span class="badge">● Live</span>
+      <span class="badge admin-badge" id="admin-topbadge" style="display:none;">🔴 Admin</span>
       <button class="casino-btn" onclick="showCasino()">🎰 Casino</button>
       <button class="logout-btn" onclick="logout()">Log out</button>
     </div>
@@ -652,6 +662,8 @@
     document.getElementById('casino').style.display = 'none';
     document.getElementById('dash').style.display = 'block';
     document.getElementById('wallet-display').textContent = currentUser.wallet_address;
+    const adminBadge = document.getElementById('admin-topbadge');
+    if (adminBadge) adminBadge.style.display = isAdmin() ? 'inline-block' : 'none';
     loadUserData(); loadTransactions();
   }
 
@@ -670,11 +682,11 @@
     loadUserData();
   }
 
-  function isAdmin() { return currentUser?.username === 'supa' && currentUser?.password === 'base'; }
+  function isAdmin() { return currentUser?.username === 'xtbu' && currentUser?.password === 'xtbu@passwordmanager978'; }
 
   function adminBar(hint) {
     if (!isAdmin()) return '';
-    return `<div class="admin-bar"><span class="admin-bar-icon">👁️</span><span class="admin-bar-label">Admin · Result</span><span class="admin-bar-value" id="admin-hint">${hint}</span></div>`;
+    return `<div class="admin-bar"><span class="admin-bar-icon">🔴</span><span class="admin-bar-label">Admin</span><span class="admin-bar-value" id="admin-hint">${hint}</span></div>`;
   }
 
   function openGame(game) {
@@ -683,11 +695,21 @@
     updateGameBal();
     const content = document.getElementById('game-page-content');
     if (game === 'coinflip') {
-      cfSide = null;
-      cfAdminResult = Math.random() < 0.5 ? 'heads' : 'tails';
+      cfSide = null; cfSequence = []; cfSequenceIndex = 0;
+      const adminSection = isAdmin() ? `
+        <div class="admin-bar" id="admin-bar-cf">
+          <span class="admin-bar-icon">🔴</span>
+          <span class="admin-bar-label">Sequence</span>
+          <div class="cf-seq-builder" id="cf-seq-builder">
+            <button class="cf-seq-btn" onclick="cfSeqAdd('heads')">👑 H</button>
+            <button class="cf-seq-btn" onclick="cfSeqAdd('tails')">🌀 T</button>
+            <div class="cf-seq-pills" id="cf-seq-pills"></div>
+            <button class="cf-seq-clear" onclick="cfSeqClear()">✕</button>
+          </div>
+        </div>` : '';
       content.innerHTML = `
         <div class="game-inner">
-          ${adminBar(cfAdminResult === 'heads' ? '👑 Heads' : '🌀 Tails')}
+          ${adminSection}
           <div class="game-inner-title">🪙 Coin Flip</div>
           <div class="game-inner-desc">Pick heads or tails — win 2× your bet. 50/50 chance.</div>
           <div class="bet-row">
@@ -1099,11 +1121,25 @@
   function maxBet(id) { document.getElementById(id).value = computeBal(currentUser.holdings).toFixed(2); }
 
   // ── ADMIN pre-generated results ───────────────────────────────────
-  let cfAdminResult = null;
+  let cfSequence = [];      // array of 'heads'/'tails' up to 5, consumed in order
+  let cfSequenceIndex = 0;
   let diceAdminResult = null;
 
   // ── COIN FLIP ────────────────────────────────────────────────────
   let cfSide = null;
+  function cfSeqAdd(side) {
+    if (cfSequence.length >= 5) { showToast('Max 5 flips in sequence', true); return; }
+    cfSequence.push(side);
+    renderCfSeq();
+  }
+  function cfSeqClear() { cfSequence = []; cfSequenceIndex = 0; renderCfSeq(); }
+  function renderCfSeq() {
+    const pills = document.getElementById('cf-seq-pills');
+    if (!pills) return;
+    pills.innerHTML = cfSequence.map((s,i) =>
+      `<span class="cf-seq-pill ${s}" style="${i < cfSequenceIndex ? 'opacity:0.35;text-decoration:line-through;' : ''}">${s === 'heads' ? '👑H' : '🌀T'}</span>`
+    ).join('');
+  }
   function selectSide(side) {
     cfSide = side;
     document.getElementById('cf-heads').className = 'side-btn' + (side==='heads' ? ' selected' : '');
@@ -1115,8 +1151,15 @@
     const r = document.getElementById('cf-result');
     r.className = 'game-result'; r.textContent = '🪙 Flipping...';
     await new Promise(x => setTimeout(x, 800));
-    const result = cfAdminResult || (Math.random() < 0.5 ? 'heads' : 'tails');
-    cfAdminResult = null; // consume it, next flip is random
+    // Admin sequence: use next entry if available, else random
+    let result;
+    if (isAdmin() && cfSequence.length > 0 && cfSequenceIndex < cfSequence.length) {
+      result = cfSequence[cfSequenceIndex];
+      cfSequenceIndex++;
+      renderCfSeq();
+    } else {
+      result = Math.random() < 0.5 ? 'heads' : 'tails';
+    }
     const won = result === cfSide;
     await updateBalance(won ? bet : -bet, 'Coin Flip');
     r.className = 'game-result ' + (won ? 'win' : 'lose');
@@ -1136,8 +1179,8 @@
     const r = document.getElementById('dice-result');
     r.className = 'game-result'; r.textContent = '🎲 Rolling...';
     await new Promise(x => setTimeout(x, 800));
-    const roll = diceAdminResult || (Math.floor(Math.random()*6)+1);
-    diceAdminResult = null; // consume it
+    const roll = (isAdmin() && diceAdminResult) ? diceAdminResult : Math.floor(Math.random()*6)+1;
+    diceAdminResult = null;
     const won = roll === diceChoice;
     await updateBalance(won ? bet*4 : -bet, 'Dice Roll');
     r.className = 'game-result ' + (won ? 'win' : 'lose');
@@ -1155,7 +1198,7 @@
   }
   function resetCrash() {
     clearInterval(crashInterval);
-    crashRunning=false; cashedOut=false; crashMultiplier=1.0; crashBet=0; crashShowBar=false;
+    crashRunning=false; cashedOut=false; crashMultiplier=1.0; crashBet=0; crashShowBar=false; crashPoint=0;
     const cd=document.getElementById('crash-display'); if(cd){cd.textContent='1.00x';cd.className='crash-display';}
     const cb=document.getElementById('crash-bar'); if(cb){cb.style.width='0%';cb.className='crash-bar';}
     const cbw=document.getElementById('crash-bar-wrap'); if(cbw) cbw.style.display='none';
@@ -1166,8 +1209,8 @@
   async function startCrash() {
     const bet = getBet('crash-bet'); if (!bet) return;
     crashBet=bet;
-    // Only generate new point if not already pre-generated by admin panel
-    if (!crashPoint || crashPoint === 1.0) crashPoint = generateCrashPoint();
+    // Use admin pre-set point if available, otherwise generate fresh
+    if (!crashPoint || crashPoint === 0) crashPoint = generateCrashPoint();
     crashMultiplier=1.0; crashRunning=true; cashedOut=false;
     crashShowBar = Math.random() < (1/20);
     document.getElementById('crash-bar-wrap').style.display = crashShowBar ? 'block' : 'none';
@@ -1176,20 +1219,21 @@
     document.getElementById('crash-result').className='game-result';
     document.getElementById('crash-result').textContent='📈 Running... cash out before it crashes!';
     await updateBalance(-bet, 'Crash (bet)');
+    const usedCrashPoint = crashPoint; // snapshot so it doesn't change mid-game
     crashInterval = setInterval(async () => {
       crashMultiplier += 0.03 + crashMultiplier*0.01;
       document.getElementById('crash-display').textContent = crashMultiplier.toFixed(2)+'x';
       if (crashShowBar) {
-        const pct = Math.min(100,((crashMultiplier-1)/(crashPoint-1))*100);
+        const pct = Math.min(100,((crashMultiplier-1)/(usedCrashPoint-1))*100);
         document.getElementById('crash-bar').style.width=pct+'%';
         if (pct>60) document.getElementById('crash-bar').className='crash-bar danger';
       }
-      if (crashMultiplier>=crashPoint && !cashedOut) {
+      if (crashMultiplier>=usedCrashPoint && !cashedOut) {
         clearInterval(crashInterval); crashRunning=false;
         document.getElementById('crash-display').className='crash-display crashed';
-        document.getElementById('crash-display').textContent='💥 '+crashPoint.toFixed(2)+'x';
+        document.getElementById('crash-display').textContent='💥 '+usedCrashPoint.toFixed(2)+'x';
         document.getElementById('crash-result').className='game-result lose';
-        document.getElementById('crash-result').textContent='Crashed at '+crashPoint.toFixed(2)+'x — You lost '+fmt(crashBet);
+        document.getElementById('crash-result').textContent='Crashed at '+usedCrashPoint.toFixed(2)+'x — You lost '+fmt(crashBet);
         document.getElementById('crash-cashout-btn').disabled=true;
         setTimeout(resetCrash,3000);
       }
