@@ -64,6 +64,16 @@
   .cf-seq-pill.heads { background: #1a3a1a; color: #4ade80; }
   .cf-seq-pill.tails { background: #1a1a3a; color: #93c5fd; }
   .cf-seq-clear { font-size: 11px; padding: 2px 7px; background: transparent; border: 0.5px solid rgba(240,100,100,0.4); border-radius: 20px; color: #f87171; cursor: pointer; margin-left: 4px; }
+
+  .cf-multi-track { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .cf-multi-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); transition: all 0.2s; }
+  .cf-multi-inactive { background: var(--color-background-secondary); opacity: 0.45; }
+  .cf-multi-active { background: var(--color-background-tertiary); border-color: var(--color-border-secondary); opacity: 1; }
+  .cf-multi-won { background: var(--color-background-success); border-color: var(--color-text-success); opacity: 1; }
+  .cf-multi-lost { background: var(--color-background-danger); border-color: var(--color-text-danger); opacity: 1; }
+  .cf-round-num { font-size: 12px; color: var(--color-text-tertiary); width: 36px; flex-shrink: 0; }
+  .cf-round-mult { font-size: 14px; font-weight: 700; color: var(--color-text-warning); font-family: var(--font-mono); flex: 1; }
+  .cf-round-result { font-size: 14px; font-weight: 600; color: var(--color-text-secondary); }
   .casino-btn { font-size: 12px; padding: 4px 10px; background: var(--color-background-warning); color: var(--color-text-warning); border: none; border-radius: 20px; cursor: pointer; font-weight: 500; }
   .casino-btn:hover { opacity: 0.85; }
   .logout-btn { font-size: 12px; color: var(--color-text-tertiary); background: none; border: none; cursor: pointer; padding: 4px 8px; }
@@ -696,6 +706,7 @@
     const content = document.getElementById('game-page-content');
     if (game === 'coinflip') {
       cfSide = null; cfSequence = []; cfSequenceIndex = 0;
+      cfMultiRound = 0; cfMultiWinnings = 0; cfMultiActive = false;
       const adminSection = isAdmin() ? `
         <div class="admin-bar" id="admin-bar-cf">
           <span class="admin-bar-icon">🔴</span>
@@ -711,18 +722,53 @@
         <div class="game-inner">
           ${adminSection}
           <div class="game-inner-title">🪙 Coin Flip</div>
-          <div class="game-inner-desc">Pick heads or tails — win 2× your bet. 50/50 chance.</div>
-          <div class="bet-row">
+          <div class="game-inner-desc">Each correct call doubles your multiplier. Cash out anytime or lose it all.</div>
+
+          <div class="cf-multi-track" id="cf-multi-track">
+            <div class="cf-multi-row cf-multi-inactive" id="cf-round-1">
+              <span class="cf-round-num">Bet 1</span>
+              <span class="cf-round-mult">2×</span>
+              <span class="cf-round-result" id="cf-rr-1">–</span>
+            </div>
+            <div class="cf-multi-row cf-multi-inactive" id="cf-round-2">
+              <span class="cf-round-num">Bet 2</span>
+              <span class="cf-round-mult">4×</span>
+              <span class="cf-round-result" id="cf-rr-2">–</span>
+            </div>
+            <div class="cf-multi-row cf-multi-inactive" id="cf-round-3">
+              <span class="cf-round-num">Bet 3</span>
+              <span class="cf-round-mult">8×</span>
+              <span class="cf-round-result" id="cf-rr-3">–</span>
+            </div>
+            <div class="cf-multi-row cf-multi-inactive" id="cf-round-4">
+              <span class="cf-round-num">Bet 4</span>
+              <span class="cf-round-mult">16×</span>
+              <span class="cf-round-result" id="cf-rr-4">–</span>
+            </div>
+            <div class="cf-multi-row cf-multi-inactive" id="cf-round-5">
+              <span class="cf-round-num">Bet 5</span>
+              <span class="cf-round-mult">32×</span>
+              <span class="cf-round-result" id="cf-rr-5">–</span>
+            </div>
+          </div>
+
+          <div class="game-result" id="cf-result">Place your bet and pick a side to start</div>
+
+          <div class="bet-row" id="cf-bet-row">
             <input class="bet-input" type="number" id="cf-bet" placeholder="Bet amount ($)" min="0" />
             <button class="half-btn" onclick="halfBet('cf-bet')">½</button>
             <button class="half-btn" onclick="maxBet('cf-bet')">Max</button>
           </div>
-          <div class="coin-flip-btns">
+
+          <div class="coin-flip-btns" id="cf-side-btns">
             <button class="side-btn" id="cf-heads" onclick="selectSide('heads')">👑 Heads</button>
             <button class="side-btn" id="cf-tails" onclick="selectSide('tails')">🌀 Tails</button>
           </div>
-          <div class="game-result" id="cf-result">Pick a side and place your bet</div>
-          <button class="play-btn" onclick="playCoinFlip()">Flip Coin</button>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="play-btn" id="cf-flip-btn" onclick="playCoinFlip()">Flip</button>
+            <button class="cashout-btn" id="cf-cashout-btn" onclick="cfCashout()" disabled style="opacity:0.35;">Cash Out</button>
+          </div>
         </div>`;
     } else if (game === 'dice') {
       diceChoice = null;
@@ -1109,9 +1155,9 @@
   function getBet(inputId) {
     const val = parseFloat(document.getElementById(inputId).value) || 0;
     const bal = computeBal(currentUser.holdings);
-    if (val <= 0)  { showToast('Enter a valid bet', true); return null; }
-    if (val > bal) { showToast('Insufficient balance', true); return null; }
-    return val;
+    if (val <= 0) { showToast('Enter a valid bet', true); return null; }
+    if (val > bal + 0.001) { showToast('Insufficient balance', true); return null; }
+    return Math.min(val, bal);
   }
   function halfBet(id) {
     const bal = computeBal(currentUser.holdings);
@@ -1127,8 +1173,13 @@
 
   // ── COIN FLIP ────────────────────────────────────────────────────
   let cfSide = null;
+  let cfMultiRound = 0;      // current round 0-4 (0=not started)
+  let cfMultiWinnings = 0;   // accumulated winnings so far
+  let cfMultiBet = 0;        // original bet
+  let cfMultiActive = false;
+
   function cfSeqAdd(side) {
-    if (cfSequence.length >= 5) { showToast('Max 5 flips in sequence', true); return; }
+    if (cfSequence.length >= 5) { showToast('Max 5 in sequence', true); return; }
     cfSequence.push(side);
     renderCfSeq();
   }
@@ -1137,21 +1188,57 @@
     const pills = document.getElementById('cf-seq-pills');
     if (!pills) return;
     pills.innerHTML = cfSequence.map((s,i) =>
-      `<span class="cf-seq-pill ${s}" style="${i < cfSequenceIndex ? 'opacity:0.35;text-decoration:line-through;' : ''}">${s === 'heads' ? '👑H' : '🌀T'}</span>`
+      `<span class="cf-seq-pill ${s}" style="${i < cfSequenceIndex ? 'opacity:0.35;text-decoration:line-through;' : ''}">${s==='heads'?'👑H':'🌀T'}</span>`
     ).join('');
   }
   function selectSide(side) {
     cfSide = side;
-    document.getElementById('cf-heads').className = 'side-btn' + (side==='heads' ? ' selected' : '');
-    document.getElementById('cf-tails').className = 'side-btn' + (side==='tails' ? ' selected' : '');
+    const h = document.getElementById('cf-heads');
+    const t = document.getElementById('cf-tails');
+    if (h) h.className = 'side-btn' + (side==='heads' ? ' selected' : '');
+    if (t) t.className = 'side-btn' + (side==='tails' ? ' selected' : '');
   }
+
+  function cfSetRoundActive(round) {
+    for (let i = 1; i <= 5; i++) {
+      const row = document.getElementById('cf-round-'+i);
+      if (!row) continue;
+      if (i < round) continue; // already handled
+      if (i === round) row.className = 'cf-multi-row cf-multi-active';
+      else row.className = 'cf-multi-row cf-multi-inactive';
+    }
+  }
+
   async function playCoinFlip() {
-    const bet = getBet('cf-bet'); if (!bet) return;
     if (!cfSide) { showToast('Pick heads or tails', true); return; }
+
+    // First flip — deduct bet
+    if (!cfMultiActive) {
+      const bet = getBet('cf-bet'); if (!bet) return;
+      cfMultiBet = bet;
+      cfMultiWinnings = bet;
+      cfMultiActive = true;
+      cfMultiRound = 1;
+      await updateBalance(-bet, 'Coin Flip (bet)');
+      // Lock bet row
+      const br = document.getElementById('cf-bet-row');
+      if (br) br.style.display = 'none';
+      // Enable cashout
+      const co = document.getElementById('cf-cashout-btn');
+      if (co) { co.disabled = false; co.style.opacity = '1'; }
+    }
+
+    const currentRound = cfMultiRound;
+    const multiplier = Math.pow(2, currentRound); // 2,4,8,16,32
+    cfSetRoundActive(currentRound);
+
     const r = document.getElementById('cf-result');
-    r.className = 'game-result'; r.textContent = '🪙 Flipping...';
-    await new Promise(x => setTimeout(x, 800));
-    // Admin sequence: use next entry if available, else random
+    r.className = 'game-result';
+    r.textContent = '🪙 Flipping round ' + currentRound + '...';
+
+    await new Promise(x => setTimeout(x, 700));
+
+    // Get result — admin sequence or random
     let result;
     if (isAdmin() && cfSequence.length > 0 && cfSequenceIndex < cfSequence.length) {
       result = cfSequence[cfSequenceIndex];
@@ -1160,10 +1247,58 @@
     } else {
       result = Math.random() < 0.5 ? 'heads' : 'tails';
     }
+
     const won = result === cfSide;
-    await updateBalance(won ? bet : -bet, 'Coin Flip');
-    r.className = 'game-result ' + (won ? 'win' : 'lose');
-    r.textContent = (result==='heads'?'👑':'🌀') + ' ' + result.charAt(0).toUpperCase()+result.slice(1) + ' — ' + (won ? 'You won '+fmt(bet)+'!' : 'You lost '+fmt(bet));
+    const roundRow = document.getElementById('cf-round-' + currentRound);
+    const roundResult = document.getElementById('cf-rr-' + currentRound);
+
+    if (!won) {
+      // Lost — game over
+      if (roundRow) roundRow.className = 'cf-multi-row cf-multi-lost';
+      if (roundResult) roundResult.textContent = (result==='heads'?'👑':'🌀') + ' Lost';
+      r.className = 'game-result lose';
+      r.textContent = (result==='heads'?'👑':'🌀') + ' ' + result + ' — Lost ' + fmt(cfMultiBet) + '!';
+      cfMultiActive = false; cfMultiRound = 0;
+      const co = document.getElementById('cf-cashout-btn');
+      if (co) { co.disabled = true; co.style.opacity = '0.35'; }
+      const br = document.getElementById('cf-bet-row');
+      if (br) br.style.display = 'flex';
+    } else {
+      // Won this round
+      if (roundRow) roundRow.className = 'cf-multi-row cf-multi-won';
+      if (roundResult) roundResult.textContent = (result==='heads'?'👑':'🌀') + ' ' + multiplier + '×';
+      cfMultiWinnings = cfMultiBet * multiplier;
+
+      if (currentRound >= 5) {
+        // Max rounds reached — auto cashout
+        await updateBalance(cfMultiWinnings, 'Coin Flip (win)');
+        r.className = 'game-result win';
+        r.textContent = '🏆 Cleared all 5 rounds! Won ' + fmt(cfMultiWinnings - cfMultiBet) + '!';
+        cfMultiActive = false; cfMultiRound = 0;
+        const co = document.getElementById('cf-cashout-btn');
+        if (co) { co.disabled = true; co.style.opacity = '0.35'; }
+        const br = document.getElementById('cf-bet-row');
+        if (br) br.style.display = 'flex';
+      } else {
+        cfMultiRound++;
+        cfSetRoundActive(cfMultiRound);
+        r.className = 'game-result win';
+        r.textContent = '✅ Round ' + currentRound + ' won! Cash out ' + fmt(cfMultiWinnings) + ' or go for ' + Math.pow(2,cfMultiRound) + '×';
+      }
+    }
+  }
+
+  async function cfCashout() {
+    if (!cfMultiActive || cfMultiWinnings <= 0) return;
+    await updateBalance(cfMultiWinnings, 'Coin Flip (cashout)');
+    const r = document.getElementById('cf-result');
+    r.className = 'game-result win';
+    r.textContent = '💰 Cashed out at ' + Math.pow(2, cfMultiRound-1) + '× — Won ' + fmt(cfMultiWinnings - cfMultiBet) + '!';
+    cfMultiActive = false; cfMultiRound = 0;
+    const co = document.getElementById('cf-cashout-btn');
+    if (co) { co.disabled = true; co.style.opacity = '0.35'; }
+    const br = document.getElementById('cf-bet-row');
+    if (br) br.style.display = 'flex';
   }
 
   // ── DICE ─────────────────────────────────────────────────────────
