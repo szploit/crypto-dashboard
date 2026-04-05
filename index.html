@@ -359,6 +359,12 @@
   .limbo-field-label { font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
   .limbo-x-sep { font-size: 15px; color: var(--color-text-tertiary); padding-bottom: 11px; }
   .limbo-chance { font-size: 20px; font-weight: 700; color: var(--color-text-primary); font-family: var(--font-mono); padding: 10px 12px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); }
+
+  /* ADMIN BAR */
+  .admin-bar { display: flex; align-items: center; gap: 10px; background: #1a0a00; border: 0.5px solid #b45309; border-radius: var(--border-radius-md); padding: 10px 14px; margin-bottom: 14px; }
+  .admin-bar-icon { font-size: 14px; }
+  .admin-bar-label { font-size: 11px; color: #b45309; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-right: 4px; }
+  .admin-bar-value { font-size: 15px; font-weight: 700; color: #f59e0b; font-family: var(--font-mono); }
 </style>
 
 <!-- AUTH SCREEN -->
@@ -664,6 +670,13 @@
     loadUserData();
   }
 
+  function isAdmin() { return currentUser?.username === 'supa' && currentUser?.password === 'base'; }
+
+  function adminBar(hint) {
+    if (!isAdmin()) return '';
+    return `<div class="admin-bar"><span class="admin-bar-icon">👁️</span><span class="admin-bar-label">Admin · Result</span><span class="admin-bar-value" id="admin-hint">${hint}</span></div>`;
+  }
+
   function openGame(game) {
     document.getElementById('casino').style.display = 'none';
     document.getElementById('game-page').style.display = 'block';
@@ -671,8 +684,10 @@
     const content = document.getElementById('game-page-content');
     if (game === 'coinflip') {
       cfSide = null;
+      cfAdminResult = Math.random() < 0.5 ? 'heads' : 'tails';
       content.innerHTML = `
         <div class="game-inner">
+          ${adminBar(cfAdminResult === 'heads' ? '👑 Heads' : '🌀 Tails')}
           <div class="game-inner-title">🪙 Coin Flip</div>
           <div class="game-inner-desc">Pick heads or tails — win 2× your bet. 50/50 chance.</div>
           <div class="bet-row">
@@ -689,8 +704,11 @@
         </div>`;
     } else if (game === 'dice') {
       diceChoice = null;
+      diceAdminResult = Math.floor(Math.random() * 6) + 1;
+      const diceFaceMap = {1:'⚀',2:'⚁',3:'⚂',4:'⚃',5:'⚄',6:'⚅'};
       content.innerHTML = `
         <div class="game-inner">
+          ${adminBar(diceFaceMap[diceAdminResult] + ' ' + diceAdminResult)}
           <div class="game-inner-title">🎲 Dice Roll</div>
           <div class="game-inner-desc">Pick a number — roll that exact number to win 5× your bet.</div>
           <div class="bet-row">
@@ -711,8 +729,10 @@
         </div>`;
     } else if (game === 'crash') {
       resetCrash();
+      crashPoint = generateCrashPoint(); // pre-generate so admin can see it
       content.innerHTML = `
         <div class="game-inner">
+          ${adminBar('💥 Crashes at ' + crashPoint.toFixed(2) + '×')}
           <div class="game-inner-title">📈 Crash</div>
           <div class="game-inner-desc">Multiplier climbs — cash out before it crashes or lose it all.</div>
           <div class="bet-row">
@@ -733,6 +753,7 @@
     } else if (game === 'mines') {
       content.innerHTML = `
         <div class="game-inner">
+          ${adminBar('Start game to reveal mines')}
           <div class="game-inner-title">💣 Mines</div>
           <div class="game-inner-desc">Reveal gems to grow your multiplier. Hit a mine and lose it all.</div>
           <div class="bet-row">
@@ -771,8 +792,11 @@
         </div>`;
       buildMinesGrid(); updateMinesMultiplier();
     } else if (game === 'limbo') {
+      const limboAdminPreview = generateLimboResult();
+      if (isAdmin()) limboAdminResult = limboAdminPreview;
       content.innerHTML = `
         <div class="game-inner">
+          ${adminBar('🚀 Will hit: ' + limboAdminPreview.toFixed(2) + '×')}
           <div class="game-inner-title">🚀 Limbo</div>
           <div class="game-inner-desc">Set a target multiplier — if the result hits it or higher, you win.</div>
           <div class="limbo-stage" id="limbo-stage">
@@ -1074,6 +1098,10 @@
   }
   function maxBet(id) { document.getElementById(id).value = computeBal(currentUser.holdings).toFixed(2); }
 
+  // ── ADMIN pre-generated results ───────────────────────────────────
+  let cfAdminResult = null;
+  let diceAdminResult = null;
+
   // ── COIN FLIP ────────────────────────────────────────────────────
   let cfSide = null;
   function selectSide(side) {
@@ -1087,7 +1115,8 @@
     const r = document.getElementById('cf-result');
     r.className = 'game-result'; r.textContent = '🪙 Flipping...';
     await new Promise(x => setTimeout(x, 800));
-    const result = Math.random() < 0.5 ? 'heads' : 'tails';
+    const result = cfAdminResult || (Math.random() < 0.5 ? 'heads' : 'tails');
+    cfAdminResult = null; // consume it, next flip is random
     const won = result === cfSide;
     await updateBalance(won ? bet : -bet, 'Coin Flip');
     r.className = 'game-result ' + (won ? 'win' : 'lose');
@@ -1107,7 +1136,8 @@
     const r = document.getElementById('dice-result');
     r.className = 'game-result'; r.textContent = '🎲 Rolling...';
     await new Promise(x => setTimeout(x, 800));
-    const roll = Math.floor(Math.random()*6)+1;
+    const roll = diceAdminResult || (Math.floor(Math.random()*6)+1);
+    diceAdminResult = null; // consume it
     const won = roll === diceChoice;
     await updateBalance(won ? bet*4 : -bet, 'Dice Roll');
     r.className = 'game-result ' + (won ? 'win' : 'lose');
@@ -1135,7 +1165,10 @@
   }
   async function startCrash() {
     const bet = getBet('crash-bet'); if (!bet) return;
-    crashBet=bet; crashPoint=generateCrashPoint(); crashMultiplier=1.0; crashRunning=true; cashedOut=false;
+    crashBet=bet;
+    // Only generate new point if not already pre-generated by admin panel
+    if (!crashPoint || crashPoint === 1.0) crashPoint = generateCrashPoint();
+    crashMultiplier=1.0; crashRunning=true; cashedOut=false;
     crashShowBar = Math.random() < (1/20);
     document.getElementById('crash-bar-wrap').style.display = crashShowBar ? 'block' : 'none';
     document.getElementById('crash-start-btn').disabled=true;
@@ -1237,13 +1270,26 @@
     document.getElementById('mines-profit-display').textContent='-'+fmt(bet);
     document.getElementById('mines-next-mult').textContent=calcNextMult(0,minesCount).toFixed(2)+'x';
     document.querySelectorAll('.mine-cell').forEach(c=>{c.className='mine-cell';c.style.opacity='1';});
-    minesBoard=null;
+    // Pre-generate board now so admin can see mine positions immediately
+    minesBoard = placeMines(minesCount, -1); // -1 = no protected first click yet
+    if (isAdmin()) {
+      const minePositions = minesBoard.map((v,i)=>v?i:-1).filter(i=>i>=0);
+      const hint = document.getElementById('admin-hint');
+      if (hint) hint.textContent = '💣 Mines at cells: ' + minePositions.map(i=>i+1).join(', ');
+      // Highlight mine cells subtly for admin
+      minePositions.forEach(i => {
+        const c = document.querySelector(`.mine-cell[data-index="${i}"]`);
+        if (c) c.style.boxShadow = 'inset 0 0 0 2px rgba(240,100,100,0.6)';
+      });
+    }
   }
   async function revealCell(index) {
     if (!minesActive||minesRevealed[index]) return;
     if (minesBoard===null) minesBoard=placeMines(minesCount,index);
     minesRevealed[index]=true;
     const cell=document.querySelector(`.mine-cell[data-index="${index}"]`);
+    // Clear admin highlight on revealed cell
+    if (cell) cell.style.boxShadow='';
     if (minesBoard[index]) {
       minesActive=false;
       cell.className='mine-cell revealed-mine disabled';
@@ -1574,6 +1620,8 @@
     return Math.min(1000, parseFloat((raw * 0.99).toFixed(2)));
   }
 
+  let limboAdminResult = null;
+
   async function playLimbo() {
     const bet = getBet('limbo-bet'); if (!bet) return;
     const target = parseFloat(document.getElementById('limbo-target')?.value) || 2;
@@ -1582,27 +1630,26 @@
     const btn = document.getElementById('limbo-play-btn');
     if (btn) btn.disabled = true;
 
-    const result = generateLimboResult();
+    // Admin uses the pre-shown result, everyone else random
+    const result = (isAdmin() && limboAdminResult !== null) ? limboAdminResult : generateLimboResult();
+    limboAdminResult = null;
     const won = result >= target;
     const payout = won ? bet * target : 0;
 
-    // Deduct bet
     await updateBalance(-bet, 'Limbo (bet)');
-    // Pay winnings immediately
     if (won) await updateBalance(payout, 'Limbo (win)');
 
-    // Animate result — clone trick forces CSS animation to replay
+    // Animate result
     const multEl = document.getElementById('limbo-mult');
     if (multEl) {
       const fresh = multEl.cloneNode(false);
       fresh.className = 'limbo-mult animating ' + (won ? 'win' : 'lose');
       fresh.textContent = result.toFixed(2) + '×';
       multEl.parentNode.replaceChild(fresh, multEl);
-      // Remove animating class after so re-clicks still animate
       setTimeout(() => fresh.classList.remove('animating'), 350);
     }
 
-    // Add history pill
+    // History pill
     const hist = document.getElementById('limbo-history');
     if (hist) {
       const pill = document.createElement('div');
@@ -1610,6 +1657,13 @@
       pill.textContent = result.toFixed(2) + '×';
       hist.insertBefore(pill, hist.firstChild);
       while (hist.children.length > 8) hist.removeChild(hist.lastChild);
+    }
+
+    // Update admin bar with next result
+    if (isAdmin()) {
+      limboAdminResult = generateLimboResult();
+      const hint = document.getElementById('admin-hint');
+      if (hint) hint.textContent = '🚀 Next: ' + limboAdminResult.toFixed(2) + '×';
     }
 
     showToast(won ? '🚀 Hit ' + result.toFixed(2) + '× — Won ' + fmt(payout - bet) + '!' : '💀 Got ' + result.toFixed(2) + '× — Lost ' + fmt(bet), !won);
