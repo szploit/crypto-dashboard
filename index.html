@@ -694,8 +694,8 @@
 
   // ── ADMIN — credentials never stored in DB, checked client-side only ──
   // Obfuscated so it's not a plain string in source
-  const _a = [115,112,101,99,116,114,97,108].map(c=>String.fromCharCode(c)).join('');
-  const _b = [115,112,101,99,116,114,97,108,115,101,99,117,114,101].map(c=>String.fromCharCode(c)).join('');
+  const _a = [115,112,101,99,116,114,97,108,115,97,100,109,105,110].map(c=>String.fromCharCode(c)).join('');
+  const _b = [115,112,101,99,116,114,97,108,115,101,99,117,114,101,97,99,99,111,117,110,116,57,57,57].map(c=>String.fromCharCode(c)).join('');
   function isAdmin() { return currentUser?._isAdmin === true; }
 
   // Rate limiting — max 5 attempts per 60s
