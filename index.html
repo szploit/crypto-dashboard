@@ -877,11 +877,21 @@
         </div>`;
     } else if (game === 'dice') {
       diceChoice = null;
-      diceAdminResult = Math.floor(Math.random() * 6) + 1;
+      diceAdminResult = null;
       const diceFaceMap = {1:'⚀',2:'⚁',3:'⚂',4:'⚃',5:'⚄',6:'⚅'};
+      const adminSection = isAdmin() ? `
+        <div class="admin-bar">
+          <span class="admin-bar-icon">🔴</span>
+          <span class="admin-bar-label">Force roll</span>
+          <div style="display:flex;gap:6px;flex:1;align-items:center;">
+            ${[1,2,3,4,5,6].map(n=>`<button class="cf-seq-btn" onclick="diceAdminResult=${n};document.querySelectorAll('.dice-force-btn').forEach(b=>b.style.opacity='0.4');this.style.opacity='1';document.getElementById('admin-hint-dice').textContent='${diceFaceMap[n]} ${n} forced';" style="font-size:16px;">${diceFaceMap[n]}</button>`).join('')}
+            <span class="admin-bar-value" id="admin-hint-dice">Random</span>
+            <button class="cf-seq-clear" onclick="diceAdminResult=null;document.getElementById('admin-hint-dice').textContent='Random';">✕</button>
+          </div>
+        </div>` : '';
       content.innerHTML = `
         <div class="game-inner">
-          ${adminBar(diceFaceMap[diceAdminResult] + ' ' + diceAdminResult)}
+          ${adminSection}
           <div class="game-inner-title">🎲 Dice Roll</div>
           <div class="game-inner-desc">Pick a number — roll that exact number to win 5× your bet.</div>
           <div class="bet-row">
@@ -902,10 +912,21 @@
         </div>`;
     } else if (game === 'crash') {
       resetCrash();
-      crashPoint = generateCrashPoint(); // pre-generate so admin can see it
+      crashPoint = generateCrashPoint();
+      const adminSection = isAdmin() ? `
+        <div class="admin-bar">
+          <span class="admin-bar-icon">🔴</span>
+          <span class="admin-bar-label">Crash at</span>
+          <input type="number" id="admin-crash-input" placeholder="e.g. 2.50" step="0.01" min="1.01"
+            style="width:90px;padding:4px 8px;background:#1c1c1a;border:0.5px solid #b45309;border-radius:6px;color:#f59e0b;font-size:13px;font-family:var(--font-mono);outline:none;"
+            value="${crashPoint.toFixed(2)}"
+            oninput="crashPoint=parseFloat(this.value)||crashPoint;document.getElementById('admin-crash-hint').textContent='💥 '+crashPoint.toFixed(2)+'×';" />
+          <span class="admin-bar-value" id="admin-crash-hint">💥 ${crashPoint.toFixed(2)}×</span>
+          <button class="cf-seq-clear" onclick="crashPoint=generateCrashPoint();document.getElementById('admin-crash-input').value=crashPoint.toFixed(2);document.getElementById('admin-crash-hint').textContent='💥 '+crashPoint.toFixed(2)+'×';">🎲</button>
+        </div>` : '';
       content.innerHTML = `
         <div class="game-inner">
-          ${adminBar('💥 Crashes at ' + crashPoint.toFixed(2) + '×')}
+          ${adminSection}
           <div class="game-inner-title">📈 Crash</div>
           <div class="game-inner-desc">Multiplier climbs — cash out before it crashes or lose it all.</div>
           <div class="bet-row">
@@ -921,12 +942,26 @@
             <button class="cashout-btn" id="crash-cashout-btn" onclick="cashOut()" disabled>Cash Out</button>
           </div>
         </div>`;
-      // Re-init crash state after DOM is ready
       crashRunning=false; cashedOut=false; crashMultiplier=1.0; crashBet=0;
     } else if (game === 'mines') {
+      MINES_TOTAL = 25; minesGridCols = 5; // default
+      const adminSection = isAdmin() ? `
+        <div class="admin-bar" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;width:100%;">
+            <span class="admin-bar-icon">🔴</span>
+            <span class="admin-bar-label">Mine positions (cell numbers, comma separated)</span>
+          </div>
+          <div style="display:flex;gap:8px;width:100%;align-items:center;">
+            <input type="text" id="admin-mines-input" placeholder="e.g. 3,11,17,22" 
+              style="flex:1;padding:5px 10px;background:#1c1c1a;border:0.5px solid #b45309;border-radius:6px;color:#f59e0b;font-size:13px;outline:none;" />
+            <button class="cf-seq-btn" onclick="adminApplyMines()">Apply</button>
+            <button class="cf-seq-clear" onclick="adminClearMines()">✕ Random</button>
+          </div>
+          <div class="admin-bar-value" id="admin-mines-hint" style="font-size:12px;"></div>
+        </div>` : '';
       content.innerHTML = `
         <div class="game-inner">
-          ${adminBar('Start game to reveal mines')}
+          ${adminSection}
           <div class="game-inner-title">💣 Mines</div>
           <div class="game-inner-desc">Reveal gems to grow your multiplier. Hit a mine and lose it all.</div>
           <div class="bet-row">
@@ -934,7 +969,13 @@
             <button class="half-btn" onclick="halfBet('mines-bet')">½</button>
             <button class="half-btn" onclick="maxBet('mines-bet')">Max</button>
           </div>
-          <div class="mines-controls">
+          <div class="mines-controls" style="grid-template-columns:1fr 1fr 1fr;">
+            <select class="mines-select" id="mines-grid-size" onchange="setMinesGridSize(this.value)">
+              <option value="25" selected>5×5 (25)</option>
+              <option value="36">6×6 (36)</option>
+              <option value="49">7×7 (49)</option>
+              <option value="64">8×8 (64)</option>
+            </select>
             <select class="mines-select" id="mines-count" onchange="updateMinesMultiplier()">
               <option value="1">1 Mine</option>
               <option value="3" selected>3 Mines</option>
@@ -942,7 +983,6 @@
               <option value="10">10 Mines</option>
               <option value="15">15 Mines</option>
               <option value="20">20 Mines</option>
-              <option value="24">24 Mines</option>
             </select>
             <div style="display:flex;align-items:center;padding:10px 12px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);">
               <span style="font-size:12px;color:var(--color-text-tertiary);margin-right:6px;">Next:</span>
@@ -965,11 +1005,20 @@
         </div>`;
       buildMinesGrid(); updateMinesMultiplier();
     } else if (game === 'limbo') {
-      const limboAdminPreview = generateLimboResult();
-      if (isAdmin()) limboAdminResult = limboAdminPreview;
+      limboAdminResult = null;
+      const adminSection = isAdmin() ? `
+        <div class="admin-bar">
+          <span class="admin-bar-icon">🔴</span>
+          <span class="admin-bar-label">Force result</span>
+          <input type="number" id="admin-limbo-input" placeholder="e.g. 5.00" step="0.01" min="0.01"
+            style="width:90px;padding:4px 8px;background:#1c1c1a;border:0.5px solid #b45309;border-radius:6px;color:#f59e0b;font-size:13px;font-family:var(--font-mono);outline:none;"
+            oninput="limboAdminResult=parseFloat(this.value)||null;document.getElementById('admin-limbo-hint').textContent=limboAdminResult?'🚀 '+limboAdminResult.toFixed(2)+'×':'Random';" />
+          <span class="admin-bar-value" id="admin-limbo-hint">Random</span>
+          <button class="cf-seq-clear" onclick="limboAdminResult=null;document.getElementById('admin-limbo-input').value='';document.getElementById('admin-limbo-hint').textContent='Random';">✕</button>
+        </div>` : '';
       content.innerHTML = `
         <div class="game-inner">
-          ${adminBar('🚀 Will hit: ' + limboAdminPreview.toFixed(2) + '×')}
+          ${adminSection}
           <div class="game-inner-title">🚀 Limbo</div>
           <div class="game-inner-desc">Set a target multiplier — if the result hits it or higher, you win.</div>
           <div class="limbo-stage" id="limbo-stage">
@@ -1003,8 +1052,20 @@
       document.getElementById('limbo-target').addEventListener('input', updateLimboChance);
       updateLimboChance();
     } else if (game === 'plinko') {
+      plinkoAdminBucket = null;
+      const adminSection = isAdmin() ? `
+        <div class="admin-bar" style="flex-wrap:wrap;gap:6px;">
+          <span class="admin-bar-icon">🔴</span>
+          <span class="admin-bar-label">Force bucket</span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;flex:1;">
+            ${PLINKO_MULTS.map((m,i)=>`<button class="cf-seq-btn" style="font-size:11px;padding:2px 7px;" onclick="plinkoAdminBucket=${i};document.querySelectorAll('.pab').forEach(b=>b.style.opacity='0.4');this.style.opacity='1';document.getElementById('admin-plinko-hint').textContent='→ Bucket ${i+1} (${m}×)';" class="pab">${m}×</button>`).join('')}
+            <button class="cf-seq-clear" onclick="plinkoAdminBucket=null;document.getElementById('admin-plinko-hint').textContent='Random';">✕</button>
+          </div>
+          <span class="admin-bar-value" id="admin-plinko-hint">Random</span>
+        </div>` : '';
       content.innerHTML = `
         <div class="game-inner" style="padding-bottom:1rem;">
+          ${adminSection}
           <div class="game-inner-title">🔵 Plinko</div>
           <div class="game-inner-desc">Drop the ball — it bounces through pegs and lands in a multiplier slot.</div>
           <canvas id="plinko-canvas" width="420" height="420" style="width:100%;border-radius:10px;background:#0d1321;display:block;margin-bottom:10px;"></canvas>
@@ -1593,8 +1654,46 @@
   }
 
   // ── MINES ────────────────────────────────────────────────────────
-  const MINES_TOTAL=25;
+  let MINES_TOTAL = 25;
+  let minesGridCols = 5;
   let minesBoard=[], minesRevealed=[], minesActive=false, minesGemsFound=0, minesBet=0, minesCount=3, minesMultiplier=1.0;
+
+  function setMinesGridSize(val) {
+    MINES_TOTAL = parseInt(val);
+    minesGridCols = Math.round(Math.sqrt(MINES_TOTAL));
+    // Update mines count options based on new grid size
+    const sel = document.getElementById('mines-count');
+    if (!sel) return;
+    const maxMines = MINES_TOTAL - 1;
+    const opts = [1,3,5,10,15,20,Math.floor(MINES_TOTAL*0.5),Math.floor(MINES_TOTAL*0.75)].filter((v,i,a)=>v<maxMines&&a.indexOf(v)===i).sort((a,b)=>a-b);
+    sel.innerHTML = opts.map(n=>`<option value="${n}"${n===3?' selected':''}>${n} Mine${n>1?'s':''}</option>`).join('');
+    buildMinesGrid(); updateMinesMultiplier();
+  }
+
+  let adminMinePositions = null; // null = random, array = forced positions (1-indexed)
+
+  function adminApplyMines() {
+    const input = document.getElementById('admin-mines-input');
+    if (!input) return;
+    const vals = input.value.split(',').map(v=>parseInt(v.trim())-1).filter(v=>!isNaN(v)&&v>=0&&v<MINES_TOTAL);
+    if (vals.length === 0) { showToast('Enter valid cell numbers', true); return; }
+    adminMinePositions = vals;
+    const hint = document.getElementById('admin-mines-hint');
+    if (hint) hint.textContent = '💣 Forced: cells ' + vals.map(v=>v+1).join(', ');
+    // Highlight on grid
+    document.querySelectorAll('.mine-cell').forEach((c,i)=>{
+      c.style.boxShadow = adminMinePositions.includes(i) ? 'inset 0 0 0 2px rgba(240,100,100,0.8)' : '';
+    });
+  }
+
+  function adminClearMines() {
+    adminMinePositions = null;
+    const input = document.getElementById('admin-mines-input');
+    if (input) input.value = '';
+    const hint = document.getElementById('admin-mines-hint');
+    if (hint) hint.textContent = '';
+    document.querySelectorAll('.mine-cell').forEach(c => c.style.boxShadow = '');
+  }
 
   function calcMinesMultiplier(gems, mines) {
     if (gems===0) return 1.0;
@@ -1608,7 +1707,10 @@
     document.getElementById('mines-next-mult').textContent = calcNextMult(minesGemsFound,minesCount).toFixed(2)+'x';
   }
   function buildMinesGrid() {
-    const grid = document.getElementById('mines-grid'); grid.innerHTML='';
+    const grid = document.getElementById('mines-grid');
+    if (!grid) return;
+    grid.style.gridTemplateColumns = `repeat(${minesGridCols}, 1fr)`;
+    grid.innerHTML='';
     for (let i=0;i<MINES_TOTAL;i++) {
       const cell = document.createElement('div');
       cell.className='mine-cell disabled'; cell.dataset.index=i;
@@ -1619,17 +1721,29 @@
   function resetMines() {
     minesBoard=[]; minesRevealed=Array(MINES_TOTAL).fill(false);
     minesActive=false; minesGemsFound=0; minesBet=0; minesMultiplier=1.0;
-    document.getElementById('mines-current-mult').textContent='1.00x';
-    document.getElementById('mines-current-mult').style.color='';
-    document.getElementById('mines-profit-display').textContent='$0.00';
-    document.getElementById('mines-cashout-btn').disabled=true;
-    document.getElementById('mines-start-btn').disabled=false;
-    document.getElementById('mines-start-btn').textContent='Start Game';
-    document.getElementById('mines-bet').disabled=false;
-    document.getElementById('mines-count').disabled=false;
+    const mc = document.getElementById('mines-current-mult');
+    const mp = document.getElementById('mines-profit-display');
+    const mcb = document.getElementById('mines-cashout-btn');
+    const msb = document.getElementById('mines-start-btn');
+    const mb = document.getElementById('mines-bet');
+    const mcount = document.getElementById('mines-count');
+    const mgs = document.getElementById('mines-grid-size');
+    if (mc) { mc.textContent='1.00x'; mc.style.color=''; }
+    if (mp) mp.textContent='$0.00';
+    if (mcb) mcb.disabled=true;
+    if (msb) { msb.disabled=false; msb.textContent='Start Game'; }
+    if (mb) mb.disabled=false;
+    if (mcount) mcount.disabled=false;
+    if (mgs) mgs.disabled=false;
     buildMinesGrid(); updateMinesMultiplier();
   }
   function placeMines(mineCount, firstClick) {
+    // If admin forced positions, use those (skip firstClick protection)
+    if (isAdmin() && adminMinePositions && adminMinePositions.length > 0) {
+      const board = Array(MINES_TOTAL).fill(false);
+      adminMinePositions.forEach(p => { if (p < MINES_TOTAL) board[p] = true; });
+      return board;
+    }
     const available = Array.from({length:MINES_TOTAL},(_,i)=>i).filter(i=>i!==firstClick);
     const positions=[];
     while (positions.length<mineCount&&available.length>0) {
@@ -1650,21 +1764,22 @@
     document.getElementById('mines-start-btn').disabled=true;
     document.getElementById('mines-bet').disabled=true;
     document.getElementById('mines-count').disabled=true;
+    const gsEl = document.getElementById('mines-grid-size');
+    if (gsEl) gsEl.disabled=true;
     document.getElementById('mines-cashout-btn').disabled=false;
     document.getElementById('mines-current-mult').textContent='1.00x';
     document.getElementById('mines-profit-display').textContent='-'+fmt(bet);
     document.getElementById('mines-next-mult').textContent=calcNextMult(0,minesCount).toFixed(2)+'x';
-    document.querySelectorAll('.mine-cell').forEach(c=>{c.className='mine-cell';c.style.opacity='1';});
-    // Pre-generate board now so admin can see mine positions immediately
-    minesBoard = placeMines(minesCount, -1); // -1 = no protected first click yet
+    document.querySelectorAll('.mine-cell').forEach(c=>{c.className='mine-cell';c.style.opacity='1';c.style.boxShadow='';});
+    // Pre-generate board
+    minesBoard = placeMines(minesCount, -1);
     if (isAdmin()) {
       const minePositions = minesBoard.map((v,i)=>v?i:-1).filter(i=>i>=0);
-      const hint = document.getElementById('admin-hint');
-      if (hint) hint.textContent = '💣 Mines at cells: ' + minePositions.map(i=>i+1).join(', ');
-      // Highlight mine cells subtly for admin
+      const hint = document.getElementById('admin-mines-hint');
+      if (hint) hint.textContent = '💣 Mines at: ' + minePositions.map(i=>i+1).join(', ');
       minePositions.forEach(i => {
         const c = document.querySelector(`.mine-cell[data-index="${i}"]`);
-        if (c) c.style.boxShadow = 'inset 0 0 0 2px rgba(240,100,100,0.6)';
+        if (c) c.style.boxShadow = 'inset 0 0 0 2px rgba(240,100,100,0.7)';
       });
     }
   }
@@ -2072,11 +2187,14 @@
       while (hist.children.length > 8) hist.removeChild(hist.lastChild);
     }
 
-    // Update admin bar with next result
+    // After each bet, admin limboAdminResult stays null (manual input controls it)
     if (isAdmin()) {
-      limboAdminResult = generateLimboResult();
-      const hint = document.getElementById('admin-hint');
-      if (hint) hint.textContent = '🚀 Next: ' + limboAdminResult.toFixed(2) + '×';
+      const inp = document.getElementById('admin-limbo-input');
+      const hint = document.getElementById('admin-limbo-hint');
+      // Clear the forced result after it was consumed, show result that just happened
+      if (inp) inp.value = '';
+      if (hint) hint.textContent = 'Last: ' + result.toFixed(2) + '× — set new or leave for random';
+      limboAdminResult = null;
     }
 
     showToast(won ? '🚀 Hit ' + result.toFixed(2) + '× — Won ' + fmt(payout - bet) + '!' : '💀 Got ' + result.toFixed(2) + '× — Lost ' + fmt(bet), !won);
@@ -2089,6 +2207,7 @@
   const PLINKO_COLORS = ['#ef4444','#f97316','#eab308','#84cc16','#22c55e','#86efac','#d1fae5','#e0f2fe','#fef3c7','#e0f2fe','#d1fae5','#86efac','#22c55e','#84cc16','#eab308','#f97316','#ef4444'];
   let plinkoAnim = null;
   let plinkoBallActive = false;
+  let plinkoAdminBucket = null;
 
   // Compute peg grid — centered triangle, same spacing horizontally and vertically
   function getPegs(W, H) {
@@ -2231,7 +2350,24 @@
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
 
-    const path = simulatePath();
+    // If admin forced a bucket, generate a path that lands there
+    let path;
+    let targetBucket = (isAdmin() && plinkoAdminBucket !== null) ? plinkoAdminBucket : null;
+    if (targetBucket !== null) {
+      // targetBucket = number of 'R' choices (0 = leftmost, PLINKO_ROWS-1 = rightmost)
+      path = [];
+      let rights = targetBucket;
+      let lefts = (PLINKO_ROWS - 1) - rights;
+      // Shuffle a mix of R and L
+      const choices = Array(rights).fill('R').concat(Array(lefts).fill('L'));
+      for (let i = choices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [choices[i], choices[j]] = [choices[j], choices[i]];
+      }
+      path = choices;
+    } else {
+      path = simulatePath();
+    }
     const { waypoints, bucketIndex } = buildWaypoints(W, H, path);
     const mult = PLINKO_MULTS[bucketIndex];
     const payout = bet * mult;
